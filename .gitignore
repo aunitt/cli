@@ -1,5 +1,7 @@
 *~
 *.swp
+*.swo
 
 .sconsign.dblite
 build/
+tags

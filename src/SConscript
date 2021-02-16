@@ -1,15 +1,19 @@
 
+gtest_dir = '/usr/src/gtest/lib/'
+
 files = [
-    'main.cpp',
-    'test.cpp',
+    'gtest.cpp',
     'cli.cpp',
     'list.cpp',
+    gtest_dir + 'libgtest.a',
+    gtest_dir + 'libgtest_main.a',
 ]
 
 libs = [
-    'CppUTest',
-    'CppUTestExt',
+    'pthread',
 ]
 
-Program(target='tdd', source=files, LIBS=libs)
+env = Environment(CCFLAGS='-std=c++11 -DCPPUTEST', LINKFLAGS='-lpthread')
+
+env.Program(target='tdd', source=files, LIBS=libs)
 

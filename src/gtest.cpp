@@ -1,13 +1,7 @@
 
-#undef CPPUTEST_USE_MEM_LEAK_DETECTION
-
-#include "CppUTest/TestHarness.h"
+#include <gtest/gtest.h>
 
 #include "cli.h"
-
-TEST_GROUP(CliGroup)
-{
-};
 
 static int got_action = false;
 
@@ -23,8 +17,6 @@ void cli_puts(const char *s)
 
 TEST(CliGroup, FirstTest)
 {
-    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-
     static CliCommand action = {
         .cmd = "help",
         .handler = action_handler,
@@ -41,23 +33,27 @@ TEST(CliGroup, FirstTest)
     cli_register(& cli, & action);
 
     // Check that chars are stored in the buffer
-    STRCMP_EQUAL("", cli.buff);
+    ASSERT_STREQ("", cli.buff);
     cli_process(& cli, 'h');
-    STRCMP_EQUAL("h", cli.buff);
+    ASSERT_STREQ("h", cli.buff);
     cli_process(& cli, 'e');
-    STRCMP_EQUAL("he", cli.buff);
+    ASSERT_STREQ("he", cli.buff);
     cli_process(& cli, 'l');
-    STRCMP_EQUAL("hel", cli.buff);
+    ASSERT_STREQ("hel", cli.buff);
     cli_process(& cli, 'p');
-    STRCMP_EQUAL("help", cli.buff);
+    ASSERT_STREQ("help", cli.buff);
 
     // The last char should execute the command
     cli_process(& cli, '\n');
-    CHECK(got_action);
+    ASSERT_TRUE(got_action);
 
     // Buffer should be cleared again
-    STRCMP_EQUAL("", cli.buff);
+    ASSERT_STREQ("", cli.buff);
     cli_close(& cli);
 }
+ 
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
 
-//  FIN

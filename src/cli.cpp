@@ -35,6 +35,7 @@ void cli_init(CLI *cli, int size)
 {
     ASSERT(size);
     cli->buff = (char*) malloc(size+1);
+    cli->buff[0] = '\0';
     cli->size = size;
     cli->cursor = 0;
     cli->head = 0;
@@ -92,11 +93,15 @@ static void cli_clear(CLI *cli)
 
 void cli_process(CLI *cli, char c)
 {
-    //LOG_DEBUG("%c", c);
-
     if ((cli->cursor + 1) >= cli->size)
     {
         //  TODO : line is full : ERROR
+        return;
+    }
+
+    // Just ignore carriage return
+    if (c == '\r')
+    {
         return;
     }
 
@@ -106,7 +111,7 @@ void cli_process(CLI *cli, char c)
 
     // TODO : handle backspace
 
-    if ((c == '\r') || (c == '\n'))
+    if (c == '\n')
     {
         // Execute the line
         cli_parse(cli);
