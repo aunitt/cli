@@ -1,0 +1,16 @@
+
+files = [
+    'main.cpp',
+    'test.cpp',
+    'cli.cpp',
+    'list.cpp',
+    'mutex.cpp',
+]
+
+libs = [
+    'CppUTest',
+    'CppUTestExt',
+]
+
+Program(target='tdd', source=files, LIBS=libs)
+
