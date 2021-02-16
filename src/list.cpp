@@ -4,8 +4,6 @@
 
 #include "list.h"
 
-namespace panglos {
-
 static void _list_insert(pList* head, pList w, pList *next)
 {
     ASSERT(head);
@@ -258,7 +256,5 @@ void list_visit(pList *head, pnext next_fn, visitor fn, void *arg, Mutex *mutex)
 {
     list_find(head, next_fn, fn, arg, mutex);
 }
-
-}   //  namespace
 
 //  FIN
