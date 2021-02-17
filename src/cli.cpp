@@ -122,7 +122,10 @@ void cli_process(CLI *cli, char c)
 {
     if ((cli->cursor + 1) >= cli->size)
     {
-        //  TODO : line is full : ERROR
+        //  line is full : ERROR
+        cli_clear(cli);
+        cli_reply(cli, cli->eol);
+        cli_reply(cli, cli->prompt);
         return;
     }
 

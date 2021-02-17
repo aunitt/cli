@@ -203,6 +203,32 @@ TEST(CliGroup, EmptyLine)
     cli_close(& cli);
 }
 
+TEST(CliGroup, OverflowLine)
+{
+    static CliCommand a0 = {
+        .cmd = "help",
+        .handler = cli_help,
+        .help = "help!",
+    };
+
+    cli_init(& cli, 10, 0);
+    cli_register(& cli, & a0);
+
+    for (int i = 0; i < 10; i++)
+    {
+        cli_send(& cli, "x");
+    }
+
+    // Currently silenty ignores the too-long command
+    EXPECT_STREQ("> xxxxxxxxx\r\n> ", obuff);
+    // Buffer should be cleared
+    EXPECT_STREQ("", cli.buff);
+
+    cli_reset();
+
+    cli_close(& cli);
+}
+
     /*
      *
      */
