@@ -4,6 +4,7 @@
 #define __CLI_H__
 
 #include "mutex.h"
+#include "list.h"
 
 struct CLI;
 
@@ -18,7 +19,8 @@ typedef struct CLI {
     char *buff;
     int size;
     int cursor;
-    CliCommand *head;
+    char *strtok_save;
+    pList head;
     void (*output)(const char *s);
     const char* prompt;
     const char* eol;

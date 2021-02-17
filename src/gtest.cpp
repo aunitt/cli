@@ -110,7 +110,7 @@ TEST(CliGroup, Help)
     EXPECT_STREQ("", cli.buff);
 
     // Check the output
-    EXPECT_STREQ("help\n" HELP0 "\r\n" HELP1 "\r\n" HELP2 "\r\n> ", obuff);
+    EXPECT_STREQ("help\r\n" HELP0 "\r\n" HELP1 "\r\n" HELP2 "\r\n> ", obuff);
 
     cli_reset();
 
@@ -131,15 +131,17 @@ TEST(CliGroup, Edit)
     cli_reset();
     cli_send(& cli, "heldx");
     EXPECT_STREQ("heldx", cli.buff);
+    EXPECT_STREQ("heldx", obuff);
 
     cli_send(& cli, "\b");
     EXPECT_STREQ("held", cli.buff);
+    EXPECT_STREQ("heldx\b \b", obuff);
 
     cli_send(& cli, "\b");
     EXPECT_STREQ("hel", cli.buff);
+    EXPECT_STREQ("heldx\b \b\b \b", obuff);
 
     cli_send(& cli, "p\r\n");
-
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
 
@@ -171,6 +173,27 @@ TEST(CliGroup, Context)
     ctx_ran = false;
     cli_send(& cli, "help\r\n");
     EXPECT_TRUE(ctx_ran);
+
+    // Buffer should be cleared
+    EXPECT_STREQ("", cli.buff);
+
+    cli_reset();
+
+    cli_close(& cli);
+}
+
+TEST(CliGroup, EmptyLine)
+{
+    static CliCommand a0 = {
+        .cmd = "help",
+        .handler = cli_help,
+        .help = "help!",
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, & a0);
+
+    cli_send(& cli, "\r\n");
 
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);

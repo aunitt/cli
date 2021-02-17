@@ -6,18 +6,10 @@
 #include "list.h"
 #include "cli.h"
 
-static pList* next(pList item)
+static pList* next_fn(pList item)
 {
     CliCommand *cmd = (CliCommand *) item;
     return (pList*) & cmd->next;
-}
-
-static int match_cmd(pList w, void *arg)
-{
-    CliCommand *cmd = (CliCommand *) w;
-    const char* match = (const char*) arg;
-
-    return strcmp(cmd->cmd, match) == 0;
 }
 
     /*
@@ -41,29 +33,41 @@ void cli_init(CLI *cli, int size, void *ctx)
     cli->head = 0;
     cli->ctx = ctx;
 
+    // Start with the initial prompt
     cli_reply(cli, cli->prompt);
 }
 
 void cli_register(CLI *cli, CliCommand *cmd)
 {
-    list_append((pList*) & cli->head, (pList) cmd, next, cli->mutex);
+    list_append(& cli->head, (pList) cmd, next_fn, cli->mutex);
 }
 
     /*
      *
      */
 
+static int match_cmd(pList w, void *arg)
+{
+    CliCommand *cmd = (CliCommand *) w;
+    const char* match = (const char*) arg;
+
+    return strcmp(cmd->cmd, match) == 0;
+}
+
 static void cli_parse(CLI *cli)
 {
-    char *save = 0;
-
     // Extract the first word in the buffer
-    const char* cmd = strtok_r(cli->buff, " ", & save);
-    LOG_DEBUG("'%s'", cmd);
+    const char* cmd = strtok_r(cli->buff, " ", & cli->strtok_save);
+
+    if (!cmd)
+    {
+        //  Empty line. Reply with a prompt
+        cli_reply(cli, cli->prompt);
+        return;
+    }
 
     // Look up the command
-    CliCommand *exec = (CliCommand*) list_find((pList*) & cli->head, next, match_cmd, (void*) cmd, cli->mutex);
-    LOG_DEBUG("%p", exec);
+    CliCommand *exec = (CliCommand*) list_find(& cli->head, next_fn, match_cmd, (void*) cmd, cli->mutex);
 
     if (!exec)
     {
@@ -107,7 +111,7 @@ static int visit_help(pList w, void *arg)
 void cli_help(CLI *cli, CliCommand* cmd)
 {
     // Call visit_help() on all elements of the list
-    list_visit((pList*) & cli->head, next, visit_help, (void*) cli, cli->mutex);
+    list_visit(& cli->head, next_fn, visit_help, (void*) cli, cli->mutex);
 }
 
     /*
@@ -122,15 +126,15 @@ void cli_process(CLI *cli, char c)
         return;
     }
 
+    // Echo the char
+    char reply[2] = { c, '\0' };
+    cli_reply(cli, reply);
+
     // Just ignore carriage return
     if (c == '\r')
     {
         return;
     }
-
-    // Echo the char
-    char reply[2] = { c, '\0' };
-    cli_reply(cli, reply);
 
     // handle backspace
     if (c == '\b')
@@ -140,6 +144,8 @@ void cli_process(CLI *cli, char c)
             // delete the last char
             cli->cursor -= 1;
             cli->buff[cli->cursor] = '\0';
+            // overwrite the deleted char
+            cli_reply(cli, " \b");
         }
         return;
     }
