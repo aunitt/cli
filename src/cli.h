@@ -19,6 +19,7 @@ typedef struct CLI {
     CliCommand *head;
     void (*output)(const char *s);
     const char* prompt;
+    const char* eol;
 }   CLI;
 
 void cli_init(CLI *cli, int size);
@@ -26,6 +27,8 @@ void cli_close(CLI *cli);
 
 void cli_register(CLI *cli, CliCommand *cmd);
 void cli_process(CLI *cli, char c);
+
+void cli_help(CLI *cli, CliCommand* cmd);
 
 #endif  //  __CLI_H__
 

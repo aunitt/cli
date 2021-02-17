@@ -3,16 +3,24 @@
 
 #define __DEBUG_H__
 
-#include <stdio.h>
-#include <stdlib.h> // exit()
+typedef enum {
+    SEVERITY_DEBUG,
+    SEVERITY_INFO,
+    SEVERITY_WARN,
+    SEVERITY_ERROR,
+    SEVERITY_FATAL,
+}   Severity;
 
-#define LOG_DEBUG(fmt, ...) fprintf(stderr, "DEBUG " fmt "\n", __VA_ARGS__ )
-#define LOG_ERROR(fmt, ...) fprintf(stderr, "ERROR " fmt "\n", __VA_ARGS__ )
+void log_print(Severity s, const char *fmt, ...) __attribute__((format(printf,2, 3)));
+void log_die();
 
-#define ASSERT(x) if (!(x)) { \
-        LOG_ERROR("%d", 1); \
-        exit(0); \
-    }
+#define ALOG_LEVEL(level, fmt, ...) \
+    log_print(level, "%s +%d %s() : " fmt, __FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__ )
+
+#define ALOG_DEBUG(fmt, ...)    ALOG_LEVEL(SEVERITY_DEBUG, fmt, ## __VA_ARGS__ )
+#define ALOG_ERROR(fmt, ...)    ALOG_LEVEL(SEVERITY_ERROR, fmt, ## __VA_ARGS__ )
+
+#define ASSERT(x)               if (!(x)) { ALOG_ERROR(""); log_die(); }
 
 #endif // __DEBUG_H__
 

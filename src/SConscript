@@ -5,6 +5,7 @@ files = [
     'gtest.cpp',
     'cli.cpp',
     'list.cpp',
+    'debug.cpp',
     gtest_dir + 'libgtest.a',
     gtest_dir + 'libgtest_main.a',
 ]

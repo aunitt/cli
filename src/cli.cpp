@@ -58,19 +58,19 @@ static void cli_parse(CLI *cli)
 
     // Extract the first word in the buffer
     const char* cmd = strtok_r(cli->buff, " ", & save);
-    LOG_DEBUG("'%s'", cmd);
+    ALOG_DEBUG("'%s'", cmd);
 
     // Look up the command
     CliCommand *exec = (CliCommand*) list_find((pList*) & cli->head, next, match_cmd, (void*) cmd, 0);
-    LOG_DEBUG("%p", exec);
+    ALOG_DEBUG("%p", exec);
 
     if (!exec)
     {
         // Command not found
         cli_reply(cli, "'");
         cli_reply(cli, cmd);
-        cli_reply(cli, "' not found\n");
-        cli_reply(cli, cli->prompt);
+        cli_reply(cli, "' not found");
+        cli_reply(cli, cli->eol);
         return;
     }
 
@@ -85,6 +85,27 @@ static void cli_clear(CLI *cli)
 {
     cli->cursor = 0;
     cli->buff[0] = '\0';
+}
+
+    /*
+     *
+     */
+
+static int visit_help(pList w, void *arg)
+{
+    CliCommand *cmd = (CliCommand *) w;
+    CLI *cli = (CLI*) arg;
+
+    cli_reply(cli, cmd->help);
+    cli_reply(cli, cli->eol);
+ 
+    return 0;
+}
+
+void cli_help(CLI *cli, CliCommand* cmd)
+{
+    // Call visit_help() on all elements of the list
+    list_visit((pList*) & cli->head, next, visit_help, (void*) cli, 0);
 }
 
     /*
@@ -116,6 +137,7 @@ void cli_process(CLI *cli, char c)
         // Execute the line
         cli_parse(cli);
         cli_clear(cli);
+        cli_reply(cli, cli->prompt);
         return;
     }
 
