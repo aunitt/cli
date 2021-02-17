@@ -15,7 +15,7 @@ static int severity(Severity s)
         case SEVERITY_WARN  :   return LOG_WARNING;
         case SEVERITY_ERROR :   return LOG_ERR;
         case SEVERITY_FATAL :   return LOG_CRIT;
-        default :   ASSERT(false);
+        default :               log_die();
     }
     return 0;
 }
@@ -36,7 +36,7 @@ void log_print(Severity s, const char *fmt, ...)
 
 void log_die()
 {
-    ALOG_ERROR("%s", "");
+    log_print(SEVERITY_FATAL, "%s", "");
     exit(-1);
 }
 

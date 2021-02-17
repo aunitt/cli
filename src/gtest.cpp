@@ -59,11 +59,15 @@ TEST(CliGroup, Create)
     };
 
     got_action = false;
-    cli_init(& cli, 64);
+    cli_init(& cli, 64, 0);
     cli_register(& cli, & action);
 
     // Check that chars are stored in the buffer
     EXPECT_STREQ("", cli.buff);
+    cli_reset();
+    cli_send(& cli, "help");
+    EXPECT_STREQ("help", cli.buff);
+
     cli_close(& cli);
 }
 
@@ -94,8 +98,7 @@ TEST(CliGroup, Help)
         .help = HELP2,
     };
 
-    got_action = false;
-    cli_init(& cli, 64);
+    cli_init(& cli, 64, 0);
     cli_register(& cli, & a0);
     cli_register(& cli, & a1);
     cli_register(& cli, & a2);
@@ -108,6 +111,69 @@ TEST(CliGroup, Help)
 
     // Check the output
     EXPECT_STREQ("help\n" HELP0 "\r\n" HELP1 "\r\n" HELP2 "\r\n> ", obuff);
+
+    cli_reset();
+
+    cli_close(& cli);
+}
+
+TEST(CliGroup, Edit)
+{
+    static CliCommand a0 = {
+        .cmd = "help",
+        .handler = cli_help,
+        .help = "help!",
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, & a0);
+
+    cli_reset();
+    cli_send(& cli, "heldx");
+    EXPECT_STREQ("heldx", cli.buff);
+
+    cli_send(& cli, "\b");
+    EXPECT_STREQ("held", cli.buff);
+
+    cli_send(& cli, "\b");
+    EXPECT_STREQ("hel", cli.buff);
+
+    cli_send(& cli, "p\r\n");
+
+    // Buffer should be cleared
+    EXPECT_STREQ("", cli.buff);
+
+    cli_reset();
+
+    cli_close(& cli);
+}
+
+static const char *ctx_text = "hello world";
+static bool ctx_ran = false;
+
+void check_ctx(CLI *cli, CliCommand *cmd)
+{
+    ctx_ran = true;
+    EXPECT_EQ(cli->ctx, ctx_text);
+}
+
+TEST(CliGroup, Context)
+{
+    static CliCommand a0 = {
+        .cmd = "help",
+        .handler = check_ctx,
+        .help = "help!",
+    };
+
+    cli_init(& cli, 64, (void*) ctx_text);
+    cli_register(& cli, & a0);
+
+    ctx_ran = false;
+    cli_send(& cli, "help\r\n");
+    EXPECT_TRUE(ctx_ran);
+
+    // Buffer should be cleared
+    EXPECT_STREQ("", cli.buff);
 
     cli_reset();
 

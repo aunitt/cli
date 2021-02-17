@@ -31,7 +31,7 @@ static void cli_reply(CLI *cli, const char *text)
     cli->output(text);
 }
 
-void cli_init(CLI *cli, int size)
+void cli_init(CLI *cli, int size, void *ctx)
 {
     ASSERT(size);
     cli->buff = (char*) malloc(size+1);
@@ -39,13 +39,14 @@ void cli_init(CLI *cli, int size)
     cli->size = size;
     cli->cursor = 0;
     cli->head = 0;
+    cli->ctx = ctx;
 
     cli_reply(cli, cli->prompt);
 }
 
 void cli_register(CLI *cli, CliCommand *cmd)
 {
-    list_append((pList*) & cli->head, (pList) cmd, next, 0);
+    list_append((pList*) & cli->head, (pList) cmd, next, cli->mutex);
 }
 
     /*
@@ -58,11 +59,11 @@ static void cli_parse(CLI *cli)
 
     // Extract the first word in the buffer
     const char* cmd = strtok_r(cli->buff, " ", & save);
-    ALOG_DEBUG("'%s'", cmd);
+    LOG_DEBUG("'%s'", cmd);
 
     // Look up the command
-    CliCommand *exec = (CliCommand*) list_find((pList*) & cli->head, next, match_cmd, (void*) cmd, 0);
-    ALOG_DEBUG("%p", exec);
+    CliCommand *exec = (CliCommand*) list_find((pList*) & cli->head, next, match_cmd, (void*) cmd, cli->mutex);
+    LOG_DEBUG("%p", exec);
 
     if (!exec)
     {
@@ -93,6 +94,7 @@ static void cli_clear(CLI *cli)
 
 static int visit_help(pList w, void *arg)
 {
+    // Callback function : called for each command in the list
     CliCommand *cmd = (CliCommand *) w;
     CLI *cli = (CLI*) arg;
 
@@ -105,7 +107,7 @@ static int visit_help(pList w, void *arg)
 void cli_help(CLI *cli, CliCommand* cmd)
 {
     // Call visit_help() on all elements of the list
-    list_visit((pList*) & cli->head, next, visit_help, (void*) cli, 0);
+    list_visit((pList*) & cli->head, next, visit_help, (void*) cli, cli->mutex);
 }
 
     /*
@@ -130,7 +132,17 @@ void cli_process(CLI *cli, char c)
     char reply[2] = { c, '\0' };
     cli_reply(cli, reply);
 
-    // TODO : handle backspace
+    // handle backspace
+    if (c == '\b')
+    {
+        if (cli->cursor > 0)
+        {
+            // delete the last char
+            cli->cursor -= 1;
+            cli->buff[cli->cursor] = '\0';
+        }
+        return;
+    }
 
     if (c == '\n')
     {
