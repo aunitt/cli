@@ -2,14 +2,12 @@
 #include <gtest/gtest.h>
 
 #include "debug.h"
+#include "list.h"
 #include "cli.h"
 
-static int got_action = false;
-
-static void action_handler(CLI *cli, CliCommand *cmd)
-{
-    got_action = true;
-}
+    /*
+     *
+     */
 
 static char obuff[1024];
 static int obuff_idx = 0;
@@ -24,7 +22,7 @@ static void cli_puts(const char *s)
 {
     //  Save output
     const int len = strlen(s);
-    ASSERT_TRUE((len + obuff_idx + 1) < sizeof(obuff));
+    ASSERT_TRUE((len + obuff_idx + 1) < (int) sizeof(obuff));
 
     strcat(obuff, s);
     obuff_idx += len;
@@ -49,6 +47,17 @@ static CLI cli = {
     .prompt = "> ",
     .eol = "\r\n",
 };
+
+    /*
+     *
+     */
+
+static int got_action = false;
+
+static void action_handler(CLI *cli, CliCommand *cmd)
+{
+    got_action = true;
+}
 
 TEST(CliGroup, Create)
 {
@@ -265,6 +274,153 @@ TEST(CliGroup, OverflowLine)
     EXPECT_STREQ("", cli.buff);
 
     cli_reset();
+
+    cli_close(& cli);
+}
+
+    /*
+     *
+     */
+
+typedef struct Device
+{
+    const char* name;
+    bool (*set)(int value);
+    int  (*get)();
+    bool (*power)(bool on);
+    struct Device *next;
+}   Device;
+
+static pList *next_dev(pList item)
+{
+    Device *dev = (Device*) item;
+    return (pList*) & dev->next;
+}
+
+static int laser_value;
+bool set_laser(int v) { laser_value = v; return true; }
+int get_laser() { return laser_value; }
+bool power_laser(bool on) { return true; }
+
+static Device laser = { "laser", set_laser, get_laser, 0 };
+
+static pList devices = 0;
+
+static int dev_visit(pList w, void *arg)
+{
+    Device *dev = (Device*) w;
+    CLI *cli = (CLI*) arg;
+
+    // Print the device name
+    cli_print(cli, dev->name);
+    cli_print(cli, cli->eol);
+    return 0;
+}
+
+static int dev_match(pList w, void *arg)
+{
+    Device *dev = (Device*) w;
+    const char *s = (const char*) arg;
+    return strcmp(s, dev->name) == 0;
+}
+
+void power(CLI *cli, CliCommand *cmd)
+{
+    // Is there a subcommand?
+    const char *s = strtok_r(0, " ", & cli->strtok_save);
+    LOG_DEBUG("'%s'", s);
+
+    if (!strcmp(s, "?"))
+    {
+        //  List the devices
+        list_visit(& devices, next_dev, dev_visit, cli, 0);
+        return;
+    }
+
+    //  Expecting the device name
+
+    Device *dev = (Device*) list_find(& devices, next_dev, dev_match, (void*) s, 0);
+    if (!dev)
+    {
+        //  Not found
+        LOG_DEBUG("not found %s", s);
+        return;
+    }
+
+    LOG_DEBUG("found %s", s);
+
+    s = strtok_r(0, " ", & cli->strtok_save);
+    LOG_DEBUG("cmd=%s", s);
+
+    if (!s)
+    {
+        // No command found
+        LOG_DEBUG("no command");
+        return;
+    }
+
+    LOG_DEBUG("power %s %s", dev->name, s);
+
+    if (!strcmp(s, "?"))
+    {
+        // Query the device
+        int v = dev->get();
+        char buff[32];
+        snprintf(buff, sizeof(buff), "%d", v);
+        cli_print(cli, buff);
+        cli_print(cli, cli->eol);
+        return;
+    }
+
+    // Set the device to the passed integer value
+    char *end = 0;
+    const long int v = strtol(s, & end, 10);
+    if (*end != '\0')
+    {
+        // Number not fully converted, so an error
+        LOG_DEBUG("error in value '%s'", s);
+        return;
+    }
+
+    ASSERT(dev->set);
+    const bool okay = dev->set(v);
+    cli_print(cli, okay ? "ok" : "error");
+    cli_print(cli, cli->eol);
+}
+
+TEST(CliGroup, Power)
+{
+    list_push(& devices, (pList) & laser, next_dev, 0);
+
+    static CliCommand a0 = {
+        .cmd = "power",
+        .handler = power,
+        .help = "power <device> <on>|<off>|?\npower ?",
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, & a0);
+
+    // Query the devices
+    cli_reset();
+    cli_send(& cli, "power ?\r\n");
+
+    EXPECT_STREQ("", cli.buff);
+    EXPECT_STREQ("power ?\r\nlaser\r\n> ", obuff);
+
+    // Query the device
+    cli_reset();
+    cli_send(& cli, "power laser ?\r\n");
+
+    EXPECT_STREQ("", cli.buff);
+    EXPECT_STREQ("power laser ?\r\n0\r\n> ", obuff);
+
+    // Set the device
+    cli_reset();
+    cli_send(& cli, "power laser 1\r\n");
+
+    EXPECT_STREQ("", cli.buff);
+    EXPECT_STREQ("power laser 1\r\nok\r\n> ", obuff);
 
     cli_close(& cli);
 }

@@ -16,10 +16,11 @@ static pList* next_fn(pList item)
      *
      */
 
-static void cli_reply(CLI *cli, const char *text)
+void cli_print(CLI *cli, const char *text)
 {
     ASSERT(cli);
     ASSERT(cli->output);
+    ASSERT(text);
     cli->output(text);
 }
 
@@ -34,12 +35,16 @@ void cli_init(CLI *cli, int size, void *ctx)
     cli->ctx = ctx;
 
     // Start with the initial prompt
-    cli_reply(cli, cli->prompt);
+    cli_print(cli, cli->prompt);
 }
+
+    /*
+     *
+     */
 
 void cli_register(CLI *cli, CliCommand *cmd)
 {
-    list_append(& cli->head, (pList) cmd, next_fn, cli->mutex);
+    list_append((pList*) & cli->head, (pList) cmd, next_fn, cli->mutex);
 }
 
     /*
@@ -57,16 +62,16 @@ static int match_cmd(pList w, void *arg)
 static CliCommand* find_command(CLI *cli, const char* name)
 {
     // Look up the command
-    CliCommand *exec = (CliCommand*) list_find(& cli->head, next_fn, match_cmd, (void*) name, cli->mutex);
+    CliCommand *exec = (CliCommand*) list_find((pList*) & cli->head, next_fn, match_cmd, (void*) name, cli->mutex);
     return exec;
 }
 
 static void not_found(CLI *cli, const char *cmd)
 {
-    cli_reply(cli, "'");
-    cli_reply(cli, cmd);
-    cli_reply(cli, "' not found");
-    cli_reply(cli, cli->eol);
+    cli_print(cli, "'");
+    cli_print(cli, cmd);
+    cli_print(cli, "' not found");
+    cli_print(cli, cli->eol);
 }
 
     /*
@@ -81,7 +86,7 @@ static void cli_execute(CLI *cli)
     if (!cmd)
     {
         //  Empty line. Reply with a prompt
-        cli_reply(cli, cli->prompt);
+        cli_print(cli, cli->prompt);
         return;
     }
 
@@ -114,10 +119,10 @@ static void cli_clear(CLI *cli)
 
 static void _help(CLI *cli, CliCommand *cmd)
 {
-    cli_reply(cli, cmd->cmd);
-    cli_reply(cli, " : ");
-    cli_reply(cli, cmd->help);
-    cli_reply(cli, cli->eol);
+    cli_print(cli, cmd->cmd);
+    cli_print(cli, " : ");
+    cli_print(cli, cmd->help);
+    cli_print(cli, cli->eol);
 }
 
 static int visit_help(pList w, void *arg)
@@ -150,7 +155,7 @@ void cli_help(CLI *cli, CliCommand* cmd)
     }
 
     // Call visit_help() on all elements of the list
-    list_visit(& cli->head, next_fn, visit_help, (void*) cli, cli->mutex);
+    list_visit((pList*) & cli->head, next_fn, visit_help, (void*) cli, cli->mutex);
 }
 
     /*
@@ -163,14 +168,14 @@ void cli_process(CLI *cli, char c)
     {
         //  line is full : ERROR
         cli_clear(cli);
-        cli_reply(cli, cli->eol);
-        cli_reply(cli, cli->prompt);
+        cli_print(cli, cli->eol);
+        cli_print(cli, cli->prompt);
         return;
     }
 
     // Echo the char
     char reply[2] = { c, '\0' };
-    cli_reply(cli, reply);
+    cli_print(cli, reply);
 
     // Just ignore carriage return
     if (c == '\r')
@@ -187,7 +192,7 @@ void cli_process(CLI *cli, char c)
             cli->cursor -= 1;
             cli->buff[cli->cursor] = '\0';
             // overwrite the deleted char
-            cli_reply(cli, " \b");
+            cli_print(cli, " \b");
         }
         return;
     }
@@ -197,7 +202,7 @@ void cli_process(CLI *cli, char c)
         // Execute the line
         cli_execute(cli);
         cli_clear(cli);
-        cli_reply(cli, cli->prompt);
+        cli_print(cli, cli->prompt);
         return;
     }
 

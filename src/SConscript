@@ -14,7 +14,18 @@ libs = [
     'pthread',
 ]
 
-env = Environment(CCFLAGS='-std=c++11 -DCPPUTEST', LINKFLAGS='-lpthread')
+cflags = [
+    '-std=c++11',
+    '-Wall',
+    '-g',
+    #'-DCPPUTEST',
+]
+
+lflags = [
+    '-lpthread',
+]
+
+env = Environment(CCFLAGS=cflags, LINKFLAGS=lflags)
 
 env.Program(target='tdd', source=files, LIBS=libs)
 
