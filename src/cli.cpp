@@ -54,7 +54,26 @@ static int match_cmd(pList w, void *arg)
     return strcmp(cmd->cmd, match) == 0;
 }
 
-static void cli_parse(CLI *cli)
+static CliCommand* find_command(CLI *cli, const char* name)
+{
+    // Look up the command
+    CliCommand *exec = (CliCommand*) list_find(& cli->head, next_fn, match_cmd, (void*) name, cli->mutex);
+    return exec;
+}
+
+static void not_found(CLI *cli, const char *cmd)
+{
+    cli_reply(cli, "'");
+    cli_reply(cli, cmd);
+    cli_reply(cli, "' not found");
+    cli_reply(cli, cli->eol);
+}
+
+    /*
+     *
+     */
+
+static void cli_execute(CLI *cli)
 {
     // Extract the first word in the buffer
     const char* cmd = strtok_r(cli->buff, " ", & cli->strtok_save);
@@ -67,15 +86,12 @@ static void cli_parse(CLI *cli)
     }
 
     // Look up the command
-    CliCommand *exec = (CliCommand*) list_find(& cli->head, next_fn, match_cmd, (void*) cmd, cli->mutex);
+    CliCommand *exec = find_command(cli, cmd);
 
     if (!exec)
     {
         // Command not found
-        cli_reply(cli, "'");
-        cli_reply(cli, cmd);
-        cli_reply(cli, "' not found");
-        cli_reply(cli, cli->eol);
+        not_found(cli, cmd);
         return;
     }
 
@@ -96,20 +112,43 @@ static void cli_clear(CLI *cli)
      *
      */
 
+static void _help(CLI *cli, CliCommand *cmd)
+{
+    cli_reply(cli, cmd->cmd);
+    cli_reply(cli, " : ");
+    cli_reply(cli, cmd->help);
+    cli_reply(cli, cli->eol);
+}
+
 static int visit_help(pList w, void *arg)
 {
     // Callback function : called for each command in the list
     CliCommand *cmd = (CliCommand *) w;
     CLI *cli = (CLI*) arg;
 
-    cli_reply(cli, cmd->help);
-    cli_reply(cli, cli->eol);
- 
+    _help(cli, cmd);
     return 0;
 }
 
 void cli_help(CLI *cli, CliCommand* cmd)
 {
+    // Is there a subcommand?
+    const char *s = strtok_r(0, " ", & cli->strtok_save);
+
+    if (s)
+    {
+        CliCommand *subcommand = find_command(cli, s);
+        if (subcommand)
+        {
+            _help(cli, subcommand);
+            return;
+        }
+
+        // subcommand not found
+        not_found(cli, s);
+        return;
+    }
+
     // Call visit_help() on all elements of the list
     list_visit(& cli->head, next_fn, visit_help, (void*) cli, cli->mutex);
 }
@@ -156,7 +195,7 @@ void cli_process(CLI *cli, char c)
     if (c == '\n')
     {
         // Execute the line
-        cli_parse(cli);
+        cli_execute(cli);
         cli_clear(cli);
         cli_reply(cli, cli->prompt);
         return;

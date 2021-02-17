@@ -110,9 +110,49 @@ TEST(CliGroup, Help)
     EXPECT_STREQ("", cli.buff);
 
     // Check the output
-    EXPECT_STREQ("help\r\n" HELP0 "\r\n" HELP1 "\r\n" HELP2 "\r\n> ", obuff);
+    EXPECT_STREQ("help\r\n" "help : " HELP0 "\r\n" "anything : " HELP1 "\r\n" "another : " HELP2 "\r\n> ", obuff);
 
     cli_reset();
+
+    cli_close(& cli);
+}
+
+TEST(CliGroup, HelpSub)
+{
+    static CliCommand a0 = {
+        .cmd = "help",
+        .handler = cli_help,
+        .help = HELP0,
+    };
+    static CliCommand a1 = {
+        .cmd = "anything",
+        .handler = cli_die,
+        .help = HELP1,
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, & a0);
+    cli_register(& cli, & a1);
+
+    // Check help <subcommand>
+    cli_reset();
+    cli_send(& cli, "help anything\r\n");
+
+    // Buffer should be cleared
+    EXPECT_STREQ("", cli.buff);
+
+    // Check the output
+    EXPECT_STREQ("help anything\r\n" "anything : " HELP1 "\r\n> ", obuff);
+
+    // Check help <unknown>
+    cli_reset();
+    cli_send(& cli, "help nowt\r\n");
+
+    // Buffer should be cleared
+    EXPECT_STREQ("", cli.buff);
+
+    // Check the output
+    EXPECT_STREQ("help nowt\r\n" "'nowt' not found\r\n> ", obuff);
 
     cli_close(& cli);
 }
@@ -219,7 +259,7 @@ TEST(CliGroup, OverflowLine)
         cli_send(& cli, "x");
     }
 
-    // Currently silenty ignores the too-long command
+    // Currently silently ignores the too-long command
     EXPECT_STREQ("> xxxxxxxxx\r\n> ", obuff);
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
