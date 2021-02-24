@@ -6,6 +6,7 @@ files = [
     'cli.cpp',
     'list.cpp',
     'debug.cpp',
+    'io.cpp',
     gtest_dir + 'libgtest.a',
     gtest_dir + 'libgtest_main.a',
 ]
@@ -17,6 +18,14 @@ libs = [
 cflags = [
     '-std=c++11',
     '-Wall',
+    '-Wextra',
+    '-Wswitch-default',
+    '-Wswitch-enum',
+    '-Wconversion',
+    '-Wunused-parameter',
+
+    '-Wno-missing-field-initializers',
+
     '-g',
     #'-DCPPUTEST',
 ]

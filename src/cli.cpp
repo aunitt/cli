@@ -137,6 +137,7 @@ static int visit_help(pList w, void *arg)
 
 void cli_help(CLI *cli, CliCommand* cmd)
 {
+    UNUSED(cmd);
     // Is there a subcommand?
     const char *s = strtok_r(0, " ", & cli->strtok_save);
 

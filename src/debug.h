@@ -3,6 +3,8 @@
 
 #define __DEBUG_H__
 
+#define UNUSED(x) ((x) = (x))
+
 typedef enum {
     SEVERITY_DEBUG,
     SEVERITY_INFO,

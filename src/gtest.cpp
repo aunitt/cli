@@ -10,7 +10,7 @@
      */
 
 static char obuff[1024];
-static int obuff_idx = 0;
+static size_t obuff_idx = 0;
 
 static void cli_reset()
 {
@@ -21,7 +21,7 @@ static void cli_reset()
 static void cli_puts(const char *s)
 {
     //  Save output
-    const int len = strlen(s);
+    const size_t len = strlen(s);
     ASSERT_TRUE((len + obuff_idx + 1) < (int) sizeof(obuff));
 
     strcat(obuff, s);
@@ -56,6 +56,8 @@ static int got_action = false;
 
 static void action_handler(CLI *cli, CliCommand *cmd)
 {
+    UNUSED(cli);
+    UNUSED(cmd);
     got_action = true;
 }
 
@@ -82,6 +84,8 @@ TEST(CliGroup, Create)
 
 static void cli_die(CLI *cli, CliCommand *cmd)
 {
+    UNUSED(cli);
+    UNUSED(cmd);
     ASSERT(false);
 }
 
@@ -204,6 +208,7 @@ static bool ctx_ran = false;
 
 void check_ctx(CLI *cli, CliCommand *cmd)
 {
+    UNUSED(cmd);
     ctx_ran = true;
     EXPECT_EQ(cli->ctx, ctx_text);
 }
@@ -300,7 +305,7 @@ static pList *next_dev(pList item)
 static int laser_value;
 bool set_laser(int v) { laser_value = v; return true; }
 int get_laser() { return laser_value; }
-bool power_laser(bool on) { return true; }
+bool power_laser(bool on) { UNUSED(on); return true; }
 
 static Device laser = { "laser", set_laser, get_laser, 0 };
 
@@ -326,6 +331,8 @@ static int dev_match(pList w, void *arg)
 
 void power(CLI *cli, CliCommand *cmd)
 {
+    UNUSED(cmd);
+
     // Is there a subcommand?
     const char *s = strtok_r(0, " ", & cli->strtok_save);
     LOG_DEBUG("'%s'", s);
@@ -383,7 +390,7 @@ void power(CLI *cli, CliCommand *cmd)
     }
 
     ASSERT(dev->set);
-    const bool okay = dev->set(v);
+    const bool okay = dev->set((int) v);
     cli_print(cli, okay ? "ok" : "error");
     cli_print(cli, cli->eol);
 }
