@@ -4,31 +4,57 @@
 #include "debug.h"
 #include "list.h"
 #include "cli.h"
+#include "io.h"
 
     /*
      *
      */
 
-static char obuff[1024];
-static size_t obuff_idx = 0;
-
-static void cli_reset()
+class IO
 {
-    obuff_idx = 0;
-    obuff[0] = '\0';
-}
+    FILE *memio = 0;
+    char *mem_buf = 0;
+    size_t mem_size = 0;
 
-static void cli_puts(const char *s)
-{
-    //  Save output
-    const size_t len = strlen(s);
-    ASSERT_TRUE((len + obuff_idx + 1) < (int) sizeof(obuff));
+public:
 
-    strcat(obuff, s);
-    obuff_idx += len;
+    FILE* open()
+    {
+        memio = open_memstream(& mem_buf, & mem_size);
+        return memio;
+    }
 
-    fprintf(stderr, "%s", s);
-}
+    void close()
+    {
+        fclose(memio);
+        free(mem_buf);
+    }
+
+    void reset()
+    {
+        // reset to start of buffer
+        fseek(memio, 0, SEEK_SET);
+        // ensure the buffer is '\0' terminated
+        fwrite("\0", 1, 1, memio);
+        fseek(memio, 0, SEEK_SET);
+    }
+
+    char* get()
+    {
+        // Ensures that all data is written to buffer
+        // terminate it with a '\0' after the last char
+        fwrite("\0", 1, 1, memio);
+        fseek(memio, -1, SEEK_CUR);
+        fflush(memio);
+        return mem_buf;
+    }
+};
+
+static IO io;
+
+    /*
+     *
+     */
 
 static void cli_send(CLI *cli, const char* s)
 {
@@ -43,7 +69,7 @@ static void cli_send(CLI *cli, const char* s)
      */
 
 static CLI cli = {
-    .output = cli_puts,
+    .output = 0,
     .prompt = "> ",
     .eol = "\r\n",
 };
@@ -75,7 +101,6 @@ TEST(CliGroup, Create)
 
     // Check that chars are stored in the buffer
     EXPECT_STREQ("", cli.buff);
-    cli_reset();
     cli_send(& cli, "help");
     EXPECT_STREQ("help", cli.buff);
 
@@ -116,16 +141,14 @@ TEST(CliGroup, Help)
     cli_register(& cli, & a1);
     cli_register(& cli, & a2);
 
-    cli_reset();
+    io.reset();
     cli_send(& cli, "help\r\n");
 
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
 
     // Check the output
-    EXPECT_STREQ("help\r\n" "help : " HELP0 "\r\n" "anything : " HELP1 "\r\n" "another : " HELP2 "\r\n> ", obuff);
-
-    cli_reset();
+    EXPECT_STREQ("help\r\n" "help : " HELP0 "\r\n" "anything : " HELP1 "\r\n" "another : " HELP2 "\r\n> ", io.get());
 
     cli_close(& cli);
 }
@@ -148,24 +171,24 @@ TEST(CliGroup, HelpSub)
     cli_register(& cli, & a1);
 
     // Check help <subcommand>
-    cli_reset();
+    io.reset();
     cli_send(& cli, "help anything\r\n");
 
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
 
     // Check the output
-    EXPECT_STREQ("help anything\r\n" "anything : " HELP1 "\r\n> ", obuff);
+    EXPECT_STREQ("help anything\r\n" "anything : " HELP1 "\r\n> ", io.get());
 
     // Check help <unknown>
-    cli_reset();
+    io.reset();
     cli_send(& cli, "help nowt\r\n");
 
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
 
     // Check the output
-    EXPECT_STREQ("help nowt\r\n" "'nowt' not found\r\n> ", obuff);
+    EXPECT_STREQ("help nowt\r\n" "'nowt' not found\r\n> ", io.get());
 
     cli_close(& cli);
 }
@@ -181,24 +204,22 @@ TEST(CliGroup, Edit)
     cli_init(& cli, 64, 0);
     cli_register(& cli, & a0);
 
-    cli_reset();
+    io.reset();
     cli_send(& cli, "heldx");
     EXPECT_STREQ("heldx", cli.buff);
-    EXPECT_STREQ("heldx", obuff);
+    EXPECT_STREQ("heldx", io.get());
 
     cli_send(& cli, "\b");
     EXPECT_STREQ("held", cli.buff);
-    EXPECT_STREQ("heldx\b \b", obuff);
+    EXPECT_STREQ("heldx\b \b", io.get());
 
     cli_send(& cli, "\b");
     EXPECT_STREQ("hel", cli.buff);
-    EXPECT_STREQ("heldx\b \b\b \b", obuff);
+    EXPECT_STREQ("heldx\b \b\b \b", io.get());
 
     cli_send(& cli, "p\r\n");
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
-
-    cli_reset();
 
     cli_close(& cli);
 }
@@ -231,8 +252,6 @@ TEST(CliGroup, Context)
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
 
-    cli_reset();
-
     cli_close(& cli);
 }
 
@@ -252,8 +271,6 @@ TEST(CliGroup, EmptyLine)
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
 
-    cli_reset();
-
     cli_close(& cli);
 }
 
@@ -265,6 +282,7 @@ TEST(CliGroup, OverflowLine)
         .help = "help!",
     };
 
+    io.reset();
     cli_init(& cli, 10, 0);
     cli_register(& cli, & a0);
 
@@ -274,11 +292,9 @@ TEST(CliGroup, OverflowLine)
     }
 
     // Currently silently ignores the too-long command
-    EXPECT_STREQ("> xxxxxxxxx\r\n> ", obuff);
+    EXPECT_STREQ("> xxxxxxxxx\r\n> ", io.get());
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
-
-    cli_reset();
 
     cli_close(& cli);
 }
@@ -317,8 +333,7 @@ static int dev_visit(pList w, void *arg)
     CLI *cli = (CLI*) arg;
 
     // Print the device name
-    cli_print(cli, dev->name);
-    cli_print(cli, cli->eol);
+    cli_print(cli, "%s%s", dev->name, cli->eol);
     return 0;
 }
 
@@ -372,10 +387,7 @@ void power(CLI *cli, CliCommand *cmd)
     {
         // Query the device
         int v = dev->get();
-        char buff[32];
-        snprintf(buff, sizeof(buff), "%d", v);
-        cli_print(cli, buff);
-        cli_print(cli, cli->eol);
+        cli_print(cli, "%d%s", v, cli->eol);
         return;
     }
 
@@ -391,9 +403,12 @@ void power(CLI *cli, CliCommand *cmd)
 
     ASSERT(dev->set);
     const bool okay = dev->set((int) v);
-    cli_print(cli, okay ? "ok" : "error");
-    cli_print(cli, cli->eol);
+    cli_print(cli, "%s%s", okay ? "ok" : "error", cli->eol);
 }
+
+    /*
+     *
+     */
 
 TEST(CliGroup, Power)
 {
@@ -409,25 +424,25 @@ TEST(CliGroup, Power)
     cli_register(& cli, & a0);
 
     // Query the devices
-    cli_reset();
+    io.reset();
     cli_send(& cli, "power ?\r\n");
 
     EXPECT_STREQ("", cli.buff);
-    EXPECT_STREQ("power ?\r\nlaser\r\n> ", obuff);
+    EXPECT_STREQ("power ?\r\nlaser\r\n> ", io.get());
 
     // Query the device
-    cli_reset();
+    io.reset();
     cli_send(& cli, "power laser ?\r\n");
 
     EXPECT_STREQ("", cli.buff);
-    EXPECT_STREQ("power laser ?\r\n0\r\n> ", obuff);
+    EXPECT_STREQ("power laser ?\r\n0\r\n> ", io.get());
 
     // Set the device
-    cli_reset();
+    io.reset();
     cli_send(& cli, "power laser 1\r\n");
 
     EXPECT_STREQ("", cli.buff);
-    EXPECT_STREQ("power laser 1\r\nok\r\n> ", obuff);
+    EXPECT_STREQ("power laser 1\r\nok\r\n> ", io.get());
 
     cli_close(& cli);
 }
@@ -435,9 +450,30 @@ TEST(CliGroup, Power)
     /*
      *
      */
+
+TEST(IO, Open)
+{
+    FILE *f = fopen_debug();
+
+    ASSERT_TRUE(f);
+
+    fclose(f);
+}
+
+    /*
+     *
+     */
  
 int main(int argc, char **argv) {
+    log_open();
+
+    cli.output = io.open();
+
     testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    const int result = RUN_ALL_TESTS();
+
+    io.close();
+    log_close();
+    return result;
 }
 

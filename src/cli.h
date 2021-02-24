@@ -3,6 +3,8 @@
 
 #define __CLI_H__
 
+#include <stdio.h>
+
 struct CLI;
 struct Mutex;
 
@@ -19,7 +21,7 @@ typedef struct CLI {
     int cursor;
     char *strtok_save;
     CliCommand *head;
-    void (*output)(const char *s);
+    FILE *output;
     const char* prompt;
     const char* eol;
     struct Mutex *mutex; // can be null
@@ -32,7 +34,7 @@ void cli_close(CLI *cli);
 void cli_register(CLI *cli, CliCommand *cmd);
 void cli_process(CLI *cli, char c);
 
-void cli_print(CLI *cli, const char *text);
+void cli_print(CLI *cli, const char *fmt, ...) __attribute__((format(printf,2,3)));
 
 // Default 'help' command handler
 void cli_help(CLI *cli, CliCommand* cmd);

@@ -1,43 +1,48 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <stdio.h>
 
+#if defined(GOOGLETEST)
+
+#include <gtest/gtest.h>
+
+#endif
+
+#include "io.h"
 #include "debug.h"
 
-static int severity(Severity s)
+static FILE *out = 0;
+
+void log_open()
 {
-    switch (s)
-    {
-        case SEVERITY_DEBUG :   return LOG_DEBUG;
-        case SEVERITY_INFO  :   return LOG_INFO;
-        case SEVERITY_WARN  :   return LOG_WARNING;
-        case SEVERITY_ERROR :   return LOG_ERR;
-        case SEVERITY_FATAL :   return LOG_CRIT;
-        default :               log_die();
-    }
-    return 0;
+    out = fopen_debug();
 }
 
-void log_print(Severity s, const char *fmt, ...)
+void log_close()
 {
-    char buff[1024];
+    fclose(out);
+    out = 0;
+}
 
+void log_print(const char *fmt, ...)
+{
     va_list va;
     va_start(va, fmt);
 
-    vsnprintf(buff, sizeof(buff), fmt, va);
+    vfprintf(out, fmt, va);
 
     va_end(va);
-
-    syslog(severity(s), "%s", buff);
 }
 
 void log_die()
 {
-    log_print(SEVERITY_FATAL, "%s", "");
+    log_print("FATAL %s", "");
+#if defined(GOOGLETEST)
+    ASSERT_TRUE(false);
+#else
     exit(-1);
+#endif
 }
 
 //  FIN

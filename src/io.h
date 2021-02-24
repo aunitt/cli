@@ -6,7 +6,6 @@
 #include <stdio.h>
 
 FILE *fopen_debug();
-void fclose_debug(FILE *);
 
 #endif  //  __IO_H__
 

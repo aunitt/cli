@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "debug.h"
 #include "list.h"
@@ -16,12 +17,17 @@ static pList* next_fn(pList item)
      *
      */
 
-void cli_print(CLI *cli, const char *text)
+void cli_print(CLI *cli, const char *fmt, ...)
 {
     ASSERT(cli);
     ASSERT(cli->output);
-    ASSERT(text);
-    cli->output(text);
+
+    va_list va;
+    va_start(va, fmt);
+
+    vfprintf(cli->output, fmt, va);
+
+    va_end(va);
 }
 
 void cli_init(CLI *cli, int size, void *ctx)
@@ -35,7 +41,7 @@ void cli_init(CLI *cli, int size, void *ctx)
     cli->ctx = ctx;
 
     // Start with the initial prompt
-    cli_print(cli, cli->prompt);
+    cli_print(cli, "%s", cli->prompt);
 }
 
     /*
@@ -68,10 +74,7 @@ static CliCommand* find_command(CLI *cli, const char* name)
 
 static void not_found(CLI *cli, const char *cmd)
 {
-    cli_print(cli, "'");
-    cli_print(cli, cmd);
-    cli_print(cli, "' not found");
-    cli_print(cli, cli->eol);
+    cli_print(cli, "'%s' not found%s", cmd, cli->eol);
 }
 
     /*
@@ -86,7 +89,7 @@ static void cli_execute(CLI *cli)
     if (!cmd)
     {
         //  Empty line. Reply with a prompt
-        cli_print(cli, cli->prompt);
+        cli_print(cli, "%s", cli->prompt);
         return;
     }
 
@@ -119,10 +122,7 @@ static void cli_clear(CLI *cli)
 
 static void _help(CLI *cli, CliCommand *cmd)
 {
-    cli_print(cli, cmd->cmd);
-    cli_print(cli, " : ");
-    cli_print(cli, cmd->help);
-    cli_print(cli, cli->eol);
+    cli_print(cli, "%s : %s%s", cmd->cmd, cmd->help, cli->eol);
 }
 
 static int visit_help(pList w, void *arg)
@@ -169,14 +169,12 @@ void cli_process(CLI *cli, char c)
     {
         //  line is full : ERROR
         cli_clear(cli);
-        cli_print(cli, cli->eol);
-        cli_print(cli, cli->prompt);
+        cli_print(cli, "%s%s", cli->eol, cli->prompt);
         return;
     }
 
     // Echo the char
-    char reply[2] = { c, '\0' };
-    cli_print(cli, reply);
+    cli_print(cli, "%c", c);
 
     // Just ignore carriage return
     if (c == '\r')
@@ -203,7 +201,7 @@ void cli_process(CLI *cli, char c)
         // Execute the line
         cli_execute(cli);
         cli_clear(cli);
-        cli_print(cli, cli->prompt);
+        cli_print(cli, "%s", cli->prompt);
         return;
     }
 

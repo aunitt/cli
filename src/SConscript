@@ -7,6 +7,7 @@ files = [
     'list.cpp',
     'debug.cpp',
     'io.cpp',
+    'linux/mutex.cpp',
     gtest_dir + 'libgtest.a',
     gtest_dir + 'libgtest_main.a',
 ]
@@ -27,7 +28,8 @@ cflags = [
     '-Wno-missing-field-initializers',
 
     '-g',
-    #'-DCPPUTEST',
+    '-DGOOGLETEST',
+    '-Isrc',
 ]
 
 lflags = [
