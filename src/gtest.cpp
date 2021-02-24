@@ -450,19 +450,6 @@ TEST(CliGroup, Power)
     /*
      *
      */
-
-TEST(IO, Open)
-{
-    FILE *f = fopen_debug();
-
-    ASSERT_TRUE(f);
-
-    fclose(f);
-}
-
-    /*
-     *
-     */
  
 int main(int argc, char **argv) {
     log_open();

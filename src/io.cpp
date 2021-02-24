@@ -1,5 +1,7 @@
 
 
+#include <string.h>
+#include <stdlib.h>
 #include <syslog.h>
 
 #include "mutex.h"
@@ -26,7 +28,11 @@ static ssize_t debug_write(void *cookie, const char *buf, size_t size)
 
     Lock lock(dc->mutex);
 
-    syslog(LOG_DEBUG, "%*s", (int) size, buf);
+    char *s = strndup(buf, size);
+
+    syslog(LOG_DEBUG, "%s", s);
+
+    free(s);
 
     return 0;
 }
@@ -41,8 +47,8 @@ static int debug_seek(void *cookie, off64_t *offset, int whence)
 
 static int debug_close(void *cookie)
 {
-    // Do nothing. We don't need to close the debug FILE
-    UNUSED(cookie);
+    DebugCookie *dc = (DebugCookie*) cookie;
+    delete dc->mutex;
     return 0;
 }
 
@@ -57,6 +63,7 @@ static DebugCookie debug_cookie;
 
 FILE *fopen_debug()
 {
+    debug_cookie.mutex = Mutex::create();
     FILE *f = fopencookie(& debug_cookie, "w", debug_cookie_fns);
 
     setvbuf(f, 0, _IONBF, 0); // set unbuffered
