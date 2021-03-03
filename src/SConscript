@@ -3,9 +3,9 @@ gtest_dir = '/usr/src/gtest/lib/'
 
 files = [
     'gtest.cpp',
-    'cli.cpp',
+    'cli.c',
     'list.cpp',
-    'debug.cpp',
+    'debug.c',
     'io.cpp',
     'linux/mutex.cpp',
     gtest_dir + 'libgtest.a',
@@ -17,7 +17,6 @@ libs = [
 ]
 
 cflags = [
-    '-std=c++11',
     '-Wall',
     '-Wextra',
     '-Wswitch-default',
@@ -32,11 +31,15 @@ cflags = [
     '-Isrc',
 ]
 
+cxxflags = [
+    '-std=c++11',
+]
+
 lflags = [
     '-lpthread',
 ]
 
-env = Environment(CCFLAGS=cflags, LINKFLAGS=lflags)
+env = Environment(CCFLAGS=cflags, CXXFLAGS=cxxflags, LINKFLAGS=lflags)
 
 env.Program(target='tdd', source=files, LIBS=libs)
 

@@ -3,6 +3,10 @@
 
 #define __DEBUG_H__
 
+#if defined(__cplusplus)
+extern "C" {
+#endif 
+
 #define UNUSED(x) ((x) = (x))
 
 void log_open();
@@ -22,6 +26,9 @@ void log_die();
 
 #endif // LOG_DEBUG
 
+#if defined(__cplusplus)
+}
+#endif 
 #endif // __DEBUG_H__
 
 //  FIN

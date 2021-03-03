@@ -2,6 +2,8 @@
 #if !defined(__MUTEX_H__)
 #define __MUTEX_H__
 
+#if defined(__cplusplus)
+
 class Mutex 
 {
 public:
@@ -38,6 +40,14 @@ public:
         }
     }
 };
+
+#else  // __cplusplus
+
+struct Mutex;
+
+struct Mutex *mutex_create();
+
+#endif // __cplusplus
 
 #endif  //  __MUTEX_H__
 

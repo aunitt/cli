@@ -30,7 +30,7 @@ void cli_print(CLI *cli, const char *fmt, ...)
     va_end(va);
 }
 
-void cli_init(CLI *cli, int size, void *ctx)
+void cli_init(CLI *cli, size_t size, void *ctx)
 {
     ASSERT(size);
     cli->buff = (char*) malloc(size+1);
@@ -165,7 +165,7 @@ void cli_help(CLI *cli, CliCommand* cmd)
 
 void cli_process(CLI *cli, char c)
 {
-    if ((cli->cursor + 1) >= cli->size)
+    if (((size_t)(cli->cursor + 1)) >= cli->size)
     {
         //  line is full : ERROR
         cli_clear(cli);

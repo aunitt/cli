@@ -3,12 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#if defined(GOOGLETEST)
-
-#include <gtest/gtest.h>
-
-#endif
-
 #include "io.h"
 #include "debug.h"
 
@@ -38,11 +32,7 @@ void log_print(const char *fmt, ...)
 void log_die()
 {
     log_print("FATAL %s", "");
-#if defined(GOOGLETEST)
-    ASSERT_TRUE(false);
-#else
     exit(-1);
-#endif
 }
 
 //  FIN

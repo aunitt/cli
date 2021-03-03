@@ -5,19 +5,23 @@
 
 #include <stdio.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 struct CLI;
 struct Mutex;
 
 typedef struct CliCommand {
     const char *cmd;
-    void (*handler)(CLI *cli, struct CliCommand *cmd);
+    void (*handler)(struct CLI *cli, struct CliCommand *cmd);
     const char *help;
     struct CliCommand *next;
 }   CliCommand;
 
 typedef struct CLI {
     char *buff;
-    int size;
+    size_t size;
     int cursor;
     char *strtok_save;
     CliCommand *head;
@@ -28,7 +32,7 @@ typedef struct CLI {
     void *ctx; // context
 }   CLI;
 
-void cli_init(CLI *cli, int size, void *ctx);
+void cli_init(CLI *cli, size_t size, void *ctx);
 void cli_close(CLI *cli);
 
 void cli_register(CLI *cli, CliCommand *cmd);
@@ -39,6 +43,9 @@ void cli_print(CLI *cli, const char *fmt, ...) __attribute__((format(printf,2,3)
 // Default 'help' command handler
 void cli_help(CLI *cli, CliCommand* cmd);
 
+#if defined(__cplusplus)
+}
+#endif
 #endif  //  __CLI_H__
 
 //  FIN

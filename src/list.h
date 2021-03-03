@@ -7,29 +7,39 @@
 
 #include "mutex.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#endif 
+    
 struct ListItem;
 
 typedef struct ListItem *pList;
 
 typedef pList* (*pnext)(pList item);
 
-void list_push(pList *head, pList w, pnext next_fn, Mutex *mutex);
-void list_append(pList *head, pList w, pnext next_fn, Mutex *mutex);
-bool list_remove(pList *head, pList w, pnext next_fn, Mutex *mutex);
-int list_size(pList *head, pnext next_fn, Mutex *mutex);
+void list_push(pList *head, pList w, pnext next_fn, struct Mutex *mutex);
+void list_append(pList *head, pList w, pnext next_fn, struct Mutex *mutex);
+bool list_remove(pList *head, pList w, pnext next_fn, struct Mutex *mutex);
+int list_size(pList *head, pnext next_fn, struct Mutex *mutex);
 
-pList list_pop(pList *head, pnext next_fn, Mutex *mutex);
+pList list_pop(pList *head, pnext next_fn, struct Mutex *mutex);
 
 typedef int (*cmp_fn)(const pList w1, const pList w2);
 
-void list_add_sorted(pList *head, pList w, pnext next_fn, cmp_fn cmp, Mutex *mutex);
+void list_add_sorted(pList *head, pList w, pnext next_fn, cmp_fn cmp, struct Mutex *mutex);
 
-bool list_has(pList *head, pList w, pnext next_fn, Mutex *mutex);
+bool list_has(pList *head, pList w, pnext next_fn, struct Mutex *mutex);
 
 typedef int (*visitor)(pList w, void *arg);
 
-pList  list_find(pList *head, pnext next_fn, visitor fn, void *arg, Mutex *mutex);
-void list_visit(pList *head, pnext next_fn, visitor fn, void *arg, Mutex *mutex);
+pList  list_find(pList *head, pnext next_fn, visitor fn, void *arg, struct Mutex *mutex);
+void list_visit(pList *head, pnext next_fn, visitor fn, void *arg, struct Mutex *mutex);
+
+#if defined(__cplusplus)
+}
+#endif 
+
+#if defined(__cplusplus)
 
     /**
      *
@@ -96,6 +106,8 @@ public:
         list_visit((pList *) & head, (pnext) next_fn, (visitor) fn, arg, mutex);
     }
 };
+
+#endif // __cplusplus
 
 #endif // __LIST_H__
 
