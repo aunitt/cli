@@ -21,7 +21,6 @@ cflags = [
     '-Wno-missing-field-initializers',
 
     '-g',
-    '-DGOOGLETEST',
     '-Isrc',
 ]
 
