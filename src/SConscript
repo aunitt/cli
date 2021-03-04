@@ -1,17 +1,21 @@
 
 gtest_dir = '/usr/src/gtest/lib/'
 
-files = [
+test_files = [
     'gtest.cpp',
+    'linux/mutex.cpp',
+    'printf_test.cpp',
+    gtest_dir + 'libgtest.a',
+    gtest_dir + 'libgtest_main.a',
+]
+
+files = [
     'cli.c',
     'debug.c',
     'io.cpp',
     'list.cpp',
     'sprintf.cpp',
-    'linux/mutex.cpp',
-    gtest_dir + 'libgtest.a',
-    gtest_dir + 'libgtest_main.a',
-]
+] + test_files
 
 libs = [
     'pthread',
@@ -33,7 +37,7 @@ cflags = [
 ]
 
 cxxflags = [
-    '-std=c++11',
+    #'-std=c++11',
 ]
 
 lflags = [
@@ -41,6 +45,7 @@ lflags = [
 ]
 
 env = Environment(CCFLAGS=cflags, CXXFLAGS=cxxflags, LINKFLAGS=lflags)
+tdd = env.Program(target='tdd', source=files, LIBS=libs)
 
-env.Program(target='tdd', source=files, LIBS=libs)
+env.Alias('tdd', tdd)
 

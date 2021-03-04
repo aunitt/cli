@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "debug.h"
 
@@ -255,6 +256,9 @@ int xvprintf(Output *output, const char* fmt, va_list va)
             continue;
         }
 
+        // keep pointer to start of '%'
+        const char *start = fmt;
+
         Format f;
         f.get(& fmt, va);
 
@@ -320,8 +324,24 @@ int xvprintf(Output *output, const char* fmt, va_list va)
                 }
                 break;
             }
+            case 'f' :
+            {
+                // I don't want to rewrite all the float stuff,
+                // so just sprintf these
+                char f_fmt[8] = { 0 };
+                char buff[32];
+                const size_t size = fmt - start;
+                double f = va_arg(va, double);
+                ASSERT(size < sizeof(f_fmt));
+                strncpy(f_fmt, start, size);
+                snprintf(buff, sizeof(buff), f_fmt, f);
+                
+                count += output->_puts(buff, (int) strlen(buff));
+                break;
+            }
             default :
             {
+                // TODO : Add other formats, eg float.
                 ASSERT(0);
             }
         }

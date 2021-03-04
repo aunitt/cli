@@ -28,6 +28,7 @@ static ssize_t debug_write(void *cookie, const char *buf, size_t size)
 
     Lock lock(dc->mutex);
 
+    // TODO : the buff has no '\0' termination!
     char *s = strndup(buf, size);
 
     syslog(LOG_DEBUG, "%s", s);

@@ -4,4 +4,5 @@
 
 .sconsign.dblite
 build/
+build_arm/
 tags

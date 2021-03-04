@@ -1,0 +1,50 @@
+
+files = [
+    'cli.c',
+    'debug.c',
+    'list.cpp',
+    'sprintf.cpp',
+]
+
+libs = [
+    #'pthread',
+]
+
+cflags = [
+    '-Wall',
+    '-Wextra',
+    '-Wswitch-default',
+    '-Wswitch-enum',
+    '-Wconversion',
+    '-Wunused-parameter',
+
+    '-Wno-missing-field-initializers',
+
+    '-g',
+    '-DGOOGLETEST',
+    '-Isrc',
+]
+
+cxxflags = [
+    #'-std=c++11',
+]
+
+lflags = [
+    #'-lpthread',
+]
+
+PREFIX = 'arm-none-eabi-'
+
+env_options = {
+    'CC'    : PREFIX + 'gcc',
+    'CXX'   : PREFIX + 'g++',
+    'LD'    : PREFIX + 'g++',
+    'AR'    : PREFIX + 'ar',
+    'STRIP' : PREFIX + 'strip',
+}
+
+env = Environment(CCFLAGS=cflags, CXXFLAGS=cxxflags, LINKFLAGS=lflags, **env_options)
+arm = env.Program(target='arm', source=files, LIBS=libs)
+
+env.Alias('arm', arm)
+
