@@ -3,19 +3,19 @@ gtest_dir = '/usr/src/gtest/lib/'
 
 test_files = [
     'gtest.cpp',
-    'linux/mutex.cpp',
     'printf_test.cpp',
     'list_test.cpp',
+    'io.cpp',
     gtest_dir + 'libgtest.a',
     gtest_dir + 'libgtest_main.a',
 ]
 
 files = [
-    'cli.c',
-    'debug.c',
-    'io.cpp',
-    'list.cpp',
-    'sprintf.cpp',
+    '../src/cli.c',
+    '../src/debug.c',
+    '../src/list.cpp',
+    '../src/sprintf.cpp',
+    'linux/mutex.cpp',
 ] + test_files
 
 libs = [
