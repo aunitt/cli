@@ -61,7 +61,7 @@ static cookie_io_functions_t debug_cookie_fns {
 
 static DebugCookie debug_cookie;
 
-FILE *fopen_debug()
+extern "C" FILE *fopen_debug()
 {
     debug_cookie.mutex = Mutex::create();
     FILE *f = fopencookie(& debug_cookie, "w", debug_cookie_fns);

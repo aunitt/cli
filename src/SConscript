@@ -4,9 +4,10 @@ gtest_dir = '/usr/src/gtest/lib/'
 files = [
     'gtest.cpp',
     'cli.c',
-    'list.cpp',
     'debug.c',
     'io.cpp',
+    'list.cpp',
+    'sprintf.cpp',
     'linux/mutex.cpp',
     gtest_dir + 'libgtest.a',
     gtest_dir + 'libgtest_main.a',

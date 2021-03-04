@@ -47,6 +47,10 @@ struct Mutex;
 
 struct Mutex *mutex_create();
 
+void mutex_lock(struct Mutex*);
+void mutex_unlock(struct Mutex*);
+void mutex_delete(struct Mutex*);
+
 #endif // __cplusplus
 
 #endif  //  __MUTEX_H__

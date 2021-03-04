@@ -5,7 +5,15 @@
 
 #include <stdio.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 FILE *fopen_debug();
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif  //  __IO_H__
 
