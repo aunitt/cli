@@ -5,6 +5,7 @@ test_files = [
     'gtest.cpp',
     'linux/mutex.cpp',
     'printf_test.cpp',
+    'list_test.cpp',
     gtest_dir + 'libgtest.a',
     gtest_dir + 'libgtest_main.a',
 ]
