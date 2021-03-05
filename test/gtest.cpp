@@ -107,6 +107,35 @@ TEST(CliGroup, Create)
     cli_close(& cli);
 }
 
+TEST(CliGroup, Close)
+{
+    static CliCommand action = {
+        .cmd = "help",
+        .handler = action_handler,
+        .help = "help text",
+    };
+    static CliCommand more = {
+        .cmd = "more",
+        .handler = action_handler,
+        .help = "help text",
+    };
+
+    got_action = false;
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, & action);
+    cli_register(& cli, & more);
+
+    // Check that chars are stored in the buffer
+    EXPECT_STREQ("", cli.buff);
+    cli_send(& cli, "help");
+    EXPECT_STREQ("help", cli.buff);
+
+    cli_close(& cli);
+    // Check the actions are unlinked
+    EXPECT_EQ(action.next, (void*)0);
+    EXPECT_EQ(more.next, (void*)0);
+}
+
 static void cli_die(CLI *cli, CliCommand *cmd)
 {
     UNUSED(cli);

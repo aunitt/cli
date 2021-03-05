@@ -219,8 +219,16 @@ void cli_close(CLI *cli)
 {
     ASSERT(cli);
     ASSERT(cli->buff);
+
+    // Free the text input buffer
     free(cli->buff);
     cli->buff = 0;
+
+    // Unlink all the actions
+    while (cli->head)
+    {
+        list_remove((pList*) & cli->head, (pList) cli->head, next_fn, cli->mutex); 
+    }
 }
 
 //  FIN
