@@ -6,7 +6,7 @@
 #include "io.h"
 #include "debug.h"
 
-static Output *out = 0;
+static Output out = 0;
 
 void log_open()
 {

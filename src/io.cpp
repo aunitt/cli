@@ -11,18 +11,18 @@
 
 extern "C" {
 
-Output *fopen_debug()
+Output fopen_debug()
 {
     // TODO
     return 0;
 }
 
-int ovprintf(Output *out, const char *fmt, va_list va)
+int ovprintf(Output out, const char *fmt, va_list va)
 {
     return vfprintf(out, fmt, va);
 }
 
-int oprintf(Output *out, const char *fmt, ...)
+int oprintf(Output out, const char *fmt, ...)
 {
     va_list va;
     va_start(va, fmt);

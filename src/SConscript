@@ -5,7 +5,6 @@ files = [
     'cli.c',
     'debug.c',
     'list.cpp',
-    'sprintf.cpp',
     'io.cpp',
 ]
 
