@@ -6,6 +6,7 @@ files = [
     'debug.c',
     'list.cpp',
     'sprintf.cpp',
+    'io.cpp',
 ]
 
 libs = [

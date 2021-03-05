@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <stdarg.h>
 
 #include "mutex.h"
 
@@ -62,7 +63,9 @@ static cookie_io_functions_t debug_cookie_fns {
 
 static DebugCookie debug_cookie;
 
-extern "C" FILE *fopen_debug()
+extern "C" {
+
+Output *fopen_debug()
 {
     debug_cookie.mutex = Mutex::create();
     FILE *f = fopencookie(& debug_cookie, "w", debug_cookie_fns);
@@ -71,5 +74,23 @@ extern "C" FILE *fopen_debug()
 
     return f;
 }
+
+int ovprintf(Output *out, const char *fmt, va_list va)
+{
+    return vfprintf(out, fmt, va);
+}
+
+int oprintf(Output *out, const char *fmt, ...)
+{
+    va_list va;
+    va_start(va, fmt);
+
+    const int n = ovprintf(out, fmt, va);
+
+    va_end(va);
+    return n;
+}
+
+}   //  extern "C"
 
 //  FIN

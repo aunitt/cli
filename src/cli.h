@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 
+#include "io.h"
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -25,7 +27,7 @@ typedef struct CLI {
     int cursor;
     char *strtok_save;
     CliCommand *head;
-    FILE *output;
+    Output *output;
     const char* prompt;
     const char* eol;
     struct Mutex *mutex; // can be null
