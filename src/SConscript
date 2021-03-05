@@ -1,5 +1,7 @@
 
 files = [
+    'main.c',
+    'syscalls.c',
     'cli.c',
     'debug.c',
     'list.cpp',
@@ -29,7 +31,9 @@ cxxflags = [
 ]
 
 lflags = [
-    #'-lpthread',
+    '-lgcc',
+    '-lc',
+    #'-lgloss',
 ]
 
 PREFIX = 'arm-none-eabi-'
