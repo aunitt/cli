@@ -1,55 +1,76 @@
 
 #include <stddef.h>
-#include <sys/types.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
+#define UNUSED(x) ((x) = (x))
 
-int _write (int fd, const void *buf, size_t count)
+ssize_t __attribute__((weak)) _write(int fd, const void *buf, size_t count)
+{
+    UNUSED(fd);
+    UNUSED(buf);
+    UNUSED(count);
+    return 0;
+}
+
+ssize_t  __attribute__((weak)) _read(int fd, void * ptr, size_t len)
+{
+    UNUSED(fd);
+    UNUSED(ptr);
+    UNUSED(len);
+    return 0;
+}
+
+void *__attribute__((weak)) _sbrk(int nbytes)
+{
+    UNUSED(nbytes);
+    return 0;
+}
+
+void __attribute__((weak)) _exit(int stat)
+{
+    UNUSED(stat);
+    abort();
+}
+
+int __attribute__((weak)) _getpid()
 {
     return 0;
 }
 
-int _read (int fd, void * ptr, size_t len)
+int __attribute__((weak)) _kill(int pid, int sig)
 {
+    UNUSED(pid);
+    UNUSED(sig);
     return 0;
 }
 
-void * _sbrk (int nbytes)
+int __attribute__((weak)) _isatty(int fildes)
 {
+    UNUSED(fildes);
     return 0;
 }
 
-void _exit(int stat)
+off_t __attribute__((weak)) _lseek(int fd, off_t offset, int whence)
 {
-}
-
-int _getpid()
-{
+    UNUSED(fd);
+    UNUSED(offset);
+    UNUSED(whence);
     return 0;
 }
 
-int _kill (int pid, int sig)
+int __attribute__((weak)) _close(int fd)
 {
+    UNUSED(fd);
     return 0;
 }
 
-int _isatty(int fildes)
+int __attribute__((weak)) _fstat(int file, struct stat *st)
 {
-    return 0;
-}
-
-int _lseek(int fd, off_t offset, int whence)
-{
-    return 0;
-}
-
-int _close(int fd)
-{
-    return 0;
-}
-
-int _fstat (int file, struct stat *st)
-{
+    UNUSED(file);
+    UNUSED(st);
     return 0;
 }
 

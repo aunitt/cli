@@ -5,7 +5,8 @@ test_files = [
     'gtest.cpp',
     'printf_test.cpp',
     'list_test.cpp',
-    'io.cpp',
+    'linux/mutex.cpp',
+    'linux/io.cpp',
     gtest_dir + 'libgtest.a',
     gtest_dir + 'libgtest_main.a',
 ]
@@ -15,7 +16,6 @@ files = [
     '../src/debug.c',
     '../src/list.cpp',
     '../src/sprintf.cpp',
-    'linux/mutex.cpp',
 ] + test_files
 
 libs = [
@@ -38,7 +38,7 @@ cflags = [
 ]
 
 cxxflags = [
-    #'-std=c++11',
+    '-std=c++11',
 ]
 
 lflags = [
