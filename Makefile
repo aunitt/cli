@@ -13,7 +13,7 @@ run: all
 	build/tdd
 
 test: tdd
-	valgrind -s build/tdd
+	valgrind build/tdd
 
 clean:
 	scons -c
