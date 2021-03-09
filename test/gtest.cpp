@@ -479,6 +479,74 @@ TEST(CliGroup, Power)
     /*
      *
      */
+
+struct ctx {
+    bool done;
+};
+
+static void hello(CLI *cli, CliCommand *cmd)
+{
+    UNUSED(cmd);
+    const char *s = strtok_r(0, " ", & cli->strtok_save);
+    EXPECT_STREQ("world", s);
+    LOG_DEBUG("%s", s);
+}
+
+static void bye(CLI *cli, CliCommand *cmd)
+{
+    UNUSED(cmd);
+    LOG_DEBUG("");
+
+    struct ctx *ctx = (struct ctx*) cli->ctx;
+    ctx->done = true;
+}
+
+TEST(CliGroup, Input)
+{
+    static CliCommand a0 = {
+        .cmd = "hello",
+        .handler = hello,
+        .help = "hello",
+    };
+    static CliCommand a1 = {
+        .cmd = "bye",
+        .handler = bye,
+        .help = "bye",
+    };
+
+    struct ctx ctx = { .done = false };
+
+    cli_init(& cli, 64, & ctx);
+    cli_register(& cli, & a0);
+    cli_register(& cli, & a1);
+
+    io.reset();
+
+    FILE *in = fopen("test/input.txt", "r");
+
+    while (!feof(in))
+    {
+        char buff[64];
+
+        const char *s = fgets(buff, sizeof(buff), in);
+        if (!s)
+        {
+            break;
+        }
+
+        cli_send(& cli, buff);
+    }
+
+    fclose(in);
+
+    EXPECT_TRUE(ctx.done);
+
+    cli_close(& cli);
+}
+
+    /*
+     *
+     */
  
 int main(int argc, char **argv) {
     log_open();
