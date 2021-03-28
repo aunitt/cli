@@ -577,9 +577,7 @@ TEST(CLI, AutoComplete)
         .help = "part",
     };
 
-    struct ctx ctx = { .done = false };
-
-    cli_init(& cli, 64, & ctx);
+    cli_init(& cli, 64, 0);
     cli_register(& cli, & a0);
     cli_register(& cli, & a1);
     cli_register(& cli, & a2);
