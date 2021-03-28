@@ -554,6 +554,12 @@ static void nowt(CLI *cli, CliCommand *cmd)
     UNUSED(cmd);
 }
 
+static void autocomplete(CLI *cli, CliCommand *cmd)
+{
+    UNUSED(cli);
+    UNUSED(cmd);
+}
+
 TEST(CLI, AutoComplete)
 {
     static CliCommand a0 = {
@@ -575,6 +581,7 @@ TEST(CLI, AutoComplete)
         .cmd = "part",
         .handler = nowt,
         .help = "part",
+        .autocomplete = autocomplete,
     };
 
     cli_init(& cli, 64, 0);
@@ -612,13 +619,19 @@ TEST(CLI, AutoComplete)
     EXPECT_STREQ("partial ", io.get());
     cli_send(& cli, "\r\n"); // complete the command
 
-    // "part \t" should match 'part' and do nothing
+    // "partial \t" should match 'partial' and do nothing
+    io.reset();
+    cli_send(& cli, "partial \t");
+    EXPECT_STREQ("partial ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // test autocomplete for subcommands
+
+    // "part \t" should invoke subcommand handler
     io.reset();
     cli_send(& cli, "part \t");
     EXPECT_STREQ("part ", io.get());
     cli_send(& cli, "\r\n"); // complete the command
-
-    // TODO : test autocomplete for subcommands?
 
     cli_close(& cli);
 }
