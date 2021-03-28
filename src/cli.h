@@ -27,7 +27,7 @@ typedef struct CLI {
     int cursor;
     char *strtok_save;
     CliCommand *head;
-    Output output;
+    FILE *output;
     const char* prompt;
     const char* eol;
     struct Mutex *mutex; // can be null

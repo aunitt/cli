@@ -25,7 +25,7 @@ void cli_print(CLI *cli, const char *fmt, ...)
     va_list va;
     va_start(va, fmt);
 
-    ovprintf(cli->output, fmt, va);
+    vfprintf(cli->output, fmt, va);
 
     va_end(va);
 }

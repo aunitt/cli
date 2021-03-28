@@ -65,7 +65,7 @@ static DebugCookie debug_cookie;
 
 extern "C" {
 
-Output fopen_debug()
+FILE *fopen_debug()
 {
     debug_cookie.mutex = Mutex::create();
     FILE *f = fopencookie(& debug_cookie, "w", debug_cookie_fns);
@@ -73,22 +73,6 @@ Output fopen_debug()
     setvbuf(f, 0, _IONBF, 0); // set unbuffered
 
     return f;
-}
-
-int ovprintf(Output out, const char *fmt, va_list va)
-{
-    return vfprintf(out, fmt, va);
-}
-
-int oprintf(Output out, const char *fmt, ...)
-{
-    va_list va;
-    va_start(va, fmt);
-
-    const int n = ovprintf(out, fmt, va);
-
-    va_end(va);
-    return n;
 }
 
 }   //  extern "C"

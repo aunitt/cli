@@ -6,7 +6,7 @@
 #include "io.h"
 #include "debug.h"
 
-static Output out = 0;
+static FILE *out = 0;
 
 void log_open()
 {
@@ -24,7 +24,7 @@ void log_print(const char *fmt, ...)
     va_list va;
     va_start(va, fmt);
 
-    ovprintf(out, fmt, va);
+    vfprintf(out, fmt, va);
 
     va_end(va);
 }

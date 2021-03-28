@@ -9,12 +9,7 @@
 extern "C" {
 #endif
 
-typedef FILE *Output;
-
-Output fopen_debug();
-
-int ovprintf(Output, const char *fmt, va_list va);
-int oprintf(Output, const char *fmt, ...);
+FILE *fopen_debug();
 
 #if defined(__cplusplus)
 }
