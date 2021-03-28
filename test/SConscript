@@ -6,8 +6,6 @@ test_files = [
     'list_test.cpp',
     'linux/mutex.cpp',
     'linux/io.cpp',
-    gtest_dir + 'libgtest.a',
-    gtest_dir + 'libgtest_main.a',
 ]
 
 files = [
@@ -18,6 +16,7 @@ files = [
 
 libs = [
     'pthread',
+    'gtest',
 ]
 
 cflags = [
@@ -39,11 +38,7 @@ cxxflags = [
     '-std=c++11',
 ]
 
-lflags = [
-    '-lpthread',
-]
-
-env = Environment(CCFLAGS=cflags, CXXFLAGS=cxxflags, LINKFLAGS=lflags)
+env = Environment(CCFLAGS=cflags, CXXFLAGS=cxxflags)
 tdd = env.Program(target='tdd', source=files, LIBS=libs)
 
 env.Alias('tdd', tdd)
