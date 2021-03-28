@@ -163,6 +163,78 @@ void cli_help(CLI *cli, CliCommand* cmd)
      *
      */
 
+struct autocomplete
+{
+    CLI *cli;
+    CliCommand *last;
+    int count;
+    bool print;
+};
+
+static int visit_auto(pList w, void *arg)
+{
+    // Callback function : called for each command in the list
+    ASSERT(w);
+    ASSERT(arg);
+    CliCommand *cmd = (CliCommand *) w;
+    struct autocomplete *ac = (struct autocomplete *) arg;
+    CLI *cli = ac->cli;
+
+    if (!strncmp(cli->buff, cmd->cmd, (size_t) cli->cursor))
+    {
+        // matches the command so far
+        ac->last = cmd;
+        ac->count += 1;
+
+        if (ac->print)
+        {
+            cli_print(cli, "%s%s", cmd->cmd, cli->eol);
+        }
+    }
+
+    return 0;
+}
+
+void cli_autocomplete(CLI *cli)
+{
+    // Check for partial match of command handlers
+    struct autocomplete ac = { .cli = cli, .count = 0, .last = 0, .print = false };
+
+    list_visit((pList*) & cli->head, next_fn, visit_auto, (void*) & ac, cli->mutex);
+
+    if (ac.count == 0)
+    {
+        // No match. Do nothing
+        return;
+    }
+
+    if (ac.count == 1)
+    {
+        // Single match. autocomplete this
+        CliCommand *cmd = ac.last;
+        ASSERT(strlen(cmd->cmd) >= (size_t) cli->cursor);
+        const char *s = & cmd->cmd[cli->cursor];
+        for (; *s; s++)
+        {
+            cli_process(cli, *s);
+        }
+        cli_process(cli, ' ');
+        return;
+    }
+
+    // Print the partial matches
+    ac.print = true;
+    cli_print(cli, "%s", cli->eol);
+    list_visit((pList*) & cli->head, next_fn, visit_auto, (void*) & ac, cli->mutex);
+    cli_print(cli, "%s", cli->prompt);
+    // restore the buffer so far ..
+    cli_print(cli, "%s", cli->buff);
+}
+
+    /*
+     *
+     */
+
 void cli_process(CLI *cli, char c)
 {
     if (((size_t)(cli->cursor + 1)) >= cli->size)
@@ -170,6 +242,12 @@ void cli_process(CLI *cli, char c)
         //  line is full : ERROR
         cli_clear(cli);
         cli_print(cli, "%s%s", cli->eol, cli->prompt);
+        return;
+    }
+
+    if (c == '\t')
+    {
+        cli_autocomplete(cli);
         return;
     }
 

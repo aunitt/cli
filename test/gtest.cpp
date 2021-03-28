@@ -87,7 +87,7 @@ static void action_handler(CLI *cli, CliCommand *cmd)
     got_action = true;
 }
 
-TEST(CliGroup, Create)
+TEST(CLI, Create)
 {
     static CliCommand action = {
         .cmd = "help",
@@ -107,7 +107,7 @@ TEST(CliGroup, Create)
     cli_close(& cli);
 }
 
-TEST(CliGroup, Close)
+TEST(CLI, Close)
 {
     static CliCommand action = {
         .cmd = "help",
@@ -143,7 +143,7 @@ static void cli_die(CLI *cli, CliCommand *cmd)
     ASSERT(false);
 }
 
-TEST(CliGroup, Help)
+TEST(CLI, Help)
 {
 #define HELP0 "one line of text" 
 #define HELP1 "another help line"
@@ -182,7 +182,7 @@ TEST(CliGroup, Help)
     cli_close(& cli);
 }
 
-TEST(CliGroup, HelpSub)
+TEST(CLI, HelpSub)
 {
     static CliCommand a0 = {
         .cmd = "help",
@@ -222,7 +222,7 @@ TEST(CliGroup, HelpSub)
     cli_close(& cli);
 }
 
-TEST(CliGroup, Edit)
+TEST(CLI, Edit)
 {
     static CliCommand a0 = {
         .cmd = "help",
@@ -263,7 +263,7 @@ void check_ctx(CLI *cli, CliCommand *cmd)
     EXPECT_EQ(cli->ctx, ctx_text);
 }
 
-TEST(CliGroup, Context)
+TEST(CLI, Context)
 {
     static CliCommand a0 = {
         .cmd = "help",
@@ -284,7 +284,7 @@ TEST(CliGroup, Context)
     cli_close(& cli);
 }
 
-TEST(CliGroup, EmptyLine)
+TEST(CLI, EmptyLine)
 {
     static CliCommand a0 = {
         .cmd = "help",
@@ -303,7 +303,7 @@ TEST(CliGroup, EmptyLine)
     cli_close(& cli);
 }
 
-TEST(CliGroup, OverflowLine)
+TEST(CLI, OverflowLine)
 {
     static CliCommand a0 = {
         .cmd = "help",
@@ -439,7 +439,7 @@ void power(CLI *cli, CliCommand *cmd)
      *
      */
 
-TEST(CliGroup, Power)
+TEST(CLI, Power)
 {
     list_push(& devices, (pList) & laser, next_dev, 0);
 
@@ -501,7 +501,7 @@ static void bye(CLI *cli, CliCommand *cmd)
     ctx->done = true;
 }
 
-TEST(CliGroup, Input)
+TEST(CLI, Input)
 {
     static CliCommand a0 = {
         .cmd = "hello",
@@ -540,6 +540,87 @@ TEST(CliGroup, Input)
     fclose(in);
 
     EXPECT_TRUE(ctx.done);
+
+    cli_close(& cli);
+}
+
+    /*
+     *
+     */
+
+static void nowt(CLI *cli, CliCommand *cmd)
+{
+    UNUSED(cli);
+    UNUSED(cmd);
+}
+
+TEST(CLI, AutoComplete)
+{
+    static CliCommand a0 = {
+        .cmd = "hello",
+        .handler = nowt,
+        .help = "hello",
+    };
+    static CliCommand a1 = {
+        .cmd = "bye",
+        .handler = nowt,
+        .help = "bye",
+    };
+    static CliCommand a2 = {
+        .cmd = "partial",
+        .handler = nowt,
+        .help = "partial",
+    };
+    static CliCommand a3 = {
+        .cmd = "part",
+        .handler = nowt,
+        .help = "part",
+    };
+
+    struct ctx ctx = { .done = false };
+
+    cli_init(& cli, 64, & ctx);
+    cli_register(& cli, & a0);
+    cli_register(& cli, & a1);
+    cli_register(& cli, & a2);
+    cli_register(& cli, & a3);
+
+    io.reset();
+    // should list all the commands
+    cli_process(& cli, '\t');
+    EXPECT_STREQ("\r\nhello\r\nbye\r\npartial\r\npart\r\n> ", io.get());
+
+    // 'h' '\t' should complete 'hello '
+    io.reset();
+    cli_send(& cli, "h\t");
+    EXPECT_STREQ("hello ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // "par\t" should match 'part' and 'partial'
+    io.reset();
+    cli_send(& cli, "par\t");
+    EXPECT_STREQ("par\r\npartial\r\npart\r\n> par", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // "part\t" should match 'part' and 'partial'
+    io.reset();
+    cli_send(& cli, "part\t");
+    EXPECT_STREQ("part\r\npartial\r\npart\r\n> part", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // "parti\t" should match 'partial'
+    io.reset();
+    cli_send(& cli, "parti\t");
+    EXPECT_STREQ("partial ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // "part \t" should match 'part' and do nothing
+    io.reset();
+    cli_send(& cli, "part \t");
+    EXPECT_STREQ("part ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // TODO : test autocomplete for subcommands?
 
     cli_close(& cli);
 }
