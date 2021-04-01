@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "debug.h"
+#include <debug.h>
 #include "list.h"
 #include "cli.h"
 
