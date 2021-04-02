@@ -90,12 +90,6 @@ static void not_found(CLI *cli, const char *cmd)
 
 static bool run_subcommand(CLI *cli, CliCommand* cmd, int idx)
 {
-    // handle subcommands, if any
-    if (!cmd->subcommand)
-    {
-        return false;
-    }
-
     const char *s = cli->args[idx];
     if (!s)
     {
@@ -153,9 +147,12 @@ static void cli_execute(CLI *cli)
 
     ASSERT(exec);
 
-    if (run_subcommand(cli, exec, cli->nest))
+    if (exec->subcommand)
     {
-        return;
+        if (run_subcommand(cli, exec, cli->nest))
+        {
+            return;
+        }
     }
 
     // Execute the command

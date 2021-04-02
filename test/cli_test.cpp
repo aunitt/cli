@@ -577,4 +577,91 @@ TEST(CLI, AutoComplete)
     cli_close(& cli);
 }
 
+    /*
+     *
+     */
+
+static void sub(CLI *cli, CliCommand *cmd)
+{
+    void *ctx = cmd->ctx;
+    int v = * (int *) ctx;
+    const char *s = cli->args[cli->nest];
+    s = s ? s : "";
+    // TODO : handle not executed args
+    cli_print(cli, "got %s '%s' %d\r\n", cmd->cmd, s, v);
+}
+
+TEST(Cli, Subcommand)
+{
+    int i0 = 3;
+    CliCommand a0 = {
+        .cmd = "three",
+        .handler = sub,
+        .subcommand = 0,
+        .ctx = & i0,
+    };
+    int i1 = 2;
+    CliCommand a1 = {
+        .cmd = "two",
+        .handler = sub,
+        .subcommand = & a0,
+        .ctx = & i1,
+    };
+    int i2 = 1;
+    CliCommand a2 = {
+        .cmd = "one",
+        .handler = sub,
+        .subcommand = & a1,
+        .ctx = & i2,
+    };
+    int i3 = 0;
+    CliCommand a3 = {
+        .cmd = "top",
+        .handler = sub,
+        .subcommand = & a2,
+        .ctx = & i3,
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, & a3);
+
+    io.reset();
+
+    io.reset();
+    cli_send(& cli, "top\r\n");
+    EXPECT_STREQ("top\r\ngot top '' 0\r\n> ", io.get());
+
+    io.reset();
+    cli_send(& cli, "top xx\r\n");
+    EXPECT_STREQ("top xx\r\ngot top 'xx' 0\r\n> ", io.get());
+
+    io.reset();
+    cli_send(& cli, "top one\r\n");
+    EXPECT_STREQ("top one\r\ngot one '' 1\r\n> ", io.get());
+
+#if 0
+    io.reset();
+    cli_send(& cli, "top one xx\r\n");
+    EXPECT_STREQ("partial ", io.get());
+
+    io.reset();
+    cli_send(& cli, "top one two\r\n");
+    EXPECT_STREQ("partial ", io.get());
+
+    io.reset();
+    cli_send(& cli, "top one two xx\r\n");
+    EXPECT_STREQ("partial ", io.get());
+
+    io.reset();
+    cli_send(& cli, "top one two three\r\n");
+    EXPECT_STREQ("partial ", io.get());
+
+    io.reset();
+    cli_send(& cli, "top one two three xx\r\n");
+    EXPECT_STREQ("partial ", io.get());
+#endif
+
+    cli_close(& cli);
+}
+
 //  FIN
