@@ -585,9 +585,8 @@ static void sub(CLI *cli, CliCommand *cmd)
 {
     void *ctx = cmd->ctx;
     int v = * (int *) ctx;
-    const char *s = cli->args[cli->nest];
+    const char *s = cli_get_arg(cli, 0);
     s = s ? s : "";
-    // TODO : handle not executed args
     cli_print(cli, "got %s '%s' %d\r\n", cmd->cmd, s, v);
 }
 
@@ -639,27 +638,25 @@ TEST(Cli, Subcommand)
     cli_send(& cli, "top one\r\n");
     EXPECT_STREQ("top one\r\ngot one '' 1\r\n> ", io.get());
 
-#if 0
     io.reset();
     cli_send(& cli, "top one xx\r\n");
-    EXPECT_STREQ("partial ", io.get());
+    EXPECT_STREQ("top one xx\r\ngot one 'xx' 1\r\n> ", io.get());
 
     io.reset();
     cli_send(& cli, "top one two\r\n");
-    EXPECT_STREQ("partial ", io.get());
+    EXPECT_STREQ("top one two\r\ngot two '' 2\r\n> ", io.get());
 
     io.reset();
     cli_send(& cli, "top one two xx\r\n");
-    EXPECT_STREQ("partial ", io.get());
+    EXPECT_STREQ("top one two xx\r\ngot two 'xx' 2\r\n> ", io.get());
 
     io.reset();
     cli_send(& cli, "top one two three\r\n");
-    EXPECT_STREQ("partial ", io.get());
+    EXPECT_STREQ("top one two three\r\ngot three '' 3\r\n> ", io.get());
 
     io.reset();
     cli_send(& cli, "top one two three xx\r\n");
-    EXPECT_STREQ("partial ", io.get());
-#endif
+    EXPECT_STREQ("top one two three xx\r\ngot three 'xx' 3\r\n> ", io.get());
 
     cli_close(& cli);
 }

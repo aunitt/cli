@@ -88,24 +88,46 @@ static void not_found(CLI *cli, const char *cmd)
      *
      */
 
-static bool run_subcommand(CLI *cli, CliCommand* cmd, int idx)
+static bool execute(CLI *cli, CliCommand* cmd)
 {
-    const char *s = cli->args[idx];
+    ASSERT(cmd->handler);
+    cmd->handler(cli, cmd);
+    return true;
+}
+
+const char* cli_get_arg(CLI *cli, int offset)
+{
+    return cli->args[cli->nest + offset];
+}
+
+static bool run_command(CLI *cli, CliCommand* cmd)
+{
+    if (!cmd->subcommand)
+    {
+        // Execute the command
+        return execute(cli, cmd);
+    }
+
+    const char *s = cli_get_arg(cli, 0);
+ 
     if (!s)
     {
         // no args found
-        return false;
+        return execute(cli, cmd);
     }
  
+    // search subcommands looking or a match
     CliCommand *sub = find_subcommand(cli, cmd, s);
     if (!sub)
     {
         // no matching subcommand found
-        return false;
+        return execute(cli, cmd);
     }
 
-    printf("%s\r\n", s);
-    return true;
+    // if we have positively found a subcommand, increment the nest
+    cli->nest += 1;
+    // found a matching subcommand
+    return run_command(cli, sub);
 }
 
 static void cli_execute(CLI *cli)
@@ -145,25 +167,14 @@ static void cli_execute(CLI *cli)
         return;
     }
 
-    ASSERT(exec);
-
-    if (exec->subcommand)
-    {
-        if (run_subcommand(cli, exec, cli->nest))
-        {
-            return;
-        }
-    }
-
-    // Execute the command
-    ASSERT(exec->handler);
-    exec->handler(cli, exec);
+    run_command(cli, exec);
 }
 
 static void cli_clear(CLI *cli)
 {
     cli->cursor = 0;
     cli->buff[0] = '\0';
+    cli->nest = 0;
 }
 
     /*

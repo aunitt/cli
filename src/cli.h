@@ -57,6 +57,8 @@ void cli_print(CLI *cli, const char *fmt, ...) __attribute__((format(printf,2,3)
 // Default 'help' command handler
 void cli_help(CLI *cli, CliCommand* cmd);
 
+const char* cli_get_arg(CLI *cli, int offset);
+
 #if defined(__cplusplus)
 }
 #endif
