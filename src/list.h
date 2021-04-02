@@ -5,7 +5,7 @@
 
 #include <stdbool.h>
 
-#include "mutex.h"
+#include <cli_mutex.h>
 
 #if defined(__cplusplus)
 extern "C" {

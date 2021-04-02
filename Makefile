@@ -13,6 +13,9 @@ run: all
 	build/tdd
 
 test: tdd
+	build/tdd
+
+valgrind: tdd
 	valgrind build/tdd
 
 clean:

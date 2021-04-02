@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "mutex.h"
+#include <cli_mutex.h>
 
 #include "io.h"
 

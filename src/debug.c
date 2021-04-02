@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "io.h"
-#include "debug.h"
+#include <cli_debug.h>
 
 static FILE *out = 0;
 

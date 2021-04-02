@@ -3,7 +3,9 @@ gtest_dir = '/usr/src/gtest/lib/'
 
 test_files = [
     'gtest.cpp',
+    'test_io.cpp',
     'list_test.cpp',
+    'cli_test.cpp',
     'linux/mutex.cpp',
     'linux/io.cpp',
 ]

@@ -19,6 +19,7 @@ typedef struct CliCommand {
     void (*handler)(struct CLI *cli, struct CliCommand *cmd);
     const char *help;
     void (*autocomplete)(struct CLI *cli, struct CliCommand *cmd);
+    //struct CliCommand *subcommand; // TODO
     struct CliCommand *next;
 }   CliCommand;
 

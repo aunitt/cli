@@ -1,6 +1,6 @@
 
-#include "debug.h"
-#include "mutex.h"
+#include <cli_debug.h>
+#include <cli_mutex.h>
 
 #include "list.h"
 
