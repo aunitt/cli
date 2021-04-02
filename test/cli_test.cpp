@@ -388,9 +388,16 @@ TEST(CLI, Power)
     // Set the device
     io.reset();
     cli_send(& cli, "power laser 1\r\n");
-
     EXPECT_STREQ("", cli.buff);
     EXPECT_STREQ("power laser 1\r\nok\r\n> ", io.get());
+    EXPECT_EQ(1, laser_value); 
+
+    // Set the device
+    io.reset();
+    cli_send(& cli, "power laser 10\r\n");
+    EXPECT_STREQ("", cli.buff);
+    EXPECT_STREQ("power laser 10\r\nok\r\n> ", io.get());
+    EXPECT_EQ(10, laser_value); 
 
     cli_close(& cli);
 }
@@ -475,10 +482,25 @@ static void nowt(CLI *cli, CliCommand *cmd)
 
 TEST(CLI, AutoComplete)
 {
+    CliCommand s2 = {
+        .cmd = "three",
+        .handler = nowt,
+    };
+    CliCommand s1 = {
+        .cmd = "two",
+        .handler = nowt,
+        .next = & s2,
+    };
+    CliCommand s0 = {
+        .cmd = "one",
+        .handler = nowt,
+        .next = & s1,
+    };
     CliCommand a0 = {
         .cmd = "hello",
         .handler = nowt,
         .help = "hello",
+        .subcommand = & s0,
     };
     CliCommand a1 = {
         .cmd = "bye",
@@ -545,6 +567,15 @@ TEST(CLI, AutoComplete)
     EXPECT_STREQ("part ", io.get());
     cli_send(& cli, "\r\n"); // complete the command
 
+    // test autocomplete for subcommands
+
+#if 0
+    io.reset();
+    cli_send(& cli, "hello o\t");
+    EXPECT_STREQ("hello one", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+#endif
     cli_close(& cli);
 }
 
