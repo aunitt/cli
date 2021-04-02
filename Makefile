@@ -1,4 +1,5 @@
 
+.PHONY: ctags
 
 all:
 	scons
@@ -22,5 +23,8 @@ clean:
 	scons -c
 	rm -rf build tags
 	rm -rf build_arm tags
+
+ctags:
+	ctags -R --exclude=build --exclude=build_arm
 
 # FIN
