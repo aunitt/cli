@@ -311,7 +311,6 @@ TEST(CLI, OverflowLine)
      *
      */
 
-#if 0
 typedef struct Device
 {
     const char* name;
@@ -329,63 +328,19 @@ static Device laser = { "laser", set_laser, get_laser, 0 };
 
 static void dev_power(CLI *cli, CliCommand *cmd)
 {
-    UNUSED(cli);
-    UNUSED(cmd);
-}
-
-static void power(CLI *cli, CliCommand *cmd)
-{
-    UNUSED(cli);
-    UNUSED(cmd);
+    ASSERT(cmd->ctx);
+    Device *dev = (Device*) cmd->ctx;
 
     const char *s = cli_get_arg(cli, 0);
-    LOG_DEBUG("'%s'", s);
-
-    if (!s)
-    {
-        return;
-    }
 
     if (!strcmp(s, "?"))
     {
-        cli_help(cli, cmd);
+        // query the device
+        ASSERT(dev->get);
+        cli_print(cli, "%d%s", dev->get(), cli->eol);
         return;
     }
 
-#if 0
-    //  Expecting the device name
-
-    Device *dev = (Device*) list_find(& devices, next_dev, dev_match, (void*) s, 0);
-    if (!dev)
-    {
-        //  Not found
-        LOG_DEBUG("not found %s", s);
-        return;
-    }
-
-    LOG_DEBUG("found %s", s);
-
-    s = strtok_r(0, " ", & cli->strtok_save);
-    LOG_DEBUG("cmd=%s", s);
-
-    if (!s)
-    {
-        // No command found
-        LOG_DEBUG("no command");
-        return;
-    }
-
-    LOG_DEBUG("power %s %s", dev->name, s);
-
-    if (!strcmp(s, "?"))
-    {
-        // Query the device
-        int v = dev->get();
-        cli_print(cli, "%d%s", v, cli->eol);
-        return;
-    }
-
-    // Set the device to the passed integer value
     char *end = 0;
     const long int v = strtol(s, & end, 10);
     if (*end != '\0')
@@ -396,9 +351,8 @@ static void power(CLI *cli, CliCommand *cmd)
     }
 
     ASSERT(dev->set);
-    const bool okay = dev->set((int) v);
-    cli_print(cli, "%s%s", okay ? "ok" : "error", cli->eol);
-#endif
+    const bool ok = dev->set((int) v);
+    cli_print(cli, "%s%s", ok ? "ok" : "error", cli->eol);
 }
 
     /*
@@ -415,20 +369,14 @@ TEST(CLI, Power)
     };
     CliCommand a0 = {
         .cmd = "power",
-        .handler = power,
-        .help = "power <device>|?",
+        .handler = cli_help,
+        .help = "power <device>",
         .subcommand = & s0,
+        .ctx = & cli.head,
     };
 
     cli_init(& cli, 64, 0);
     cli_register(& cli, & a0);
-
-    // Query the devices
-    io.reset();
-    cli_send(& cli, "power ?\r\n");
-
-    EXPECT_STREQ("", cli.buff);
-    EXPECT_STREQ("power ?\r\nlaser\r\n> ", io.get());
 
     // Query the device
     io.reset();
@@ -446,7 +394,6 @@ TEST(CLI, Power)
 
     cli_close(& cli);
 }
-#endif
 
     /*
      *
