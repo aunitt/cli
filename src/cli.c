@@ -65,18 +65,21 @@ static int match_cmd(pList w, void *arg)
     return strcmp(cmd->cmd, match) == 0;
 }
 
-static CliCommand* find_command(CLI *cli, const char* name)
+static CliCommand* _find_command(CLI *cli, CliCommand **head, const char* name)
 {
     // Look up the command
-    CliCommand *exec = (CliCommand*) list_find((pList*) & cli->head, next_fn, match_cmd, (void*) name, cli->mutex);
+    CliCommand *exec = (CliCommand*) list_find((pList*) head, next_fn, match_cmd, (void*) name, cli->mutex);
     return exec;
+}
+
+static CliCommand* find_command(CLI *cli, const char* name)
+{
+    return _find_command(cli, & cli->head, name);
 }
 
 static CliCommand* find_subcommand(CLI *cli, CliCommand *cmd, const char* name)
 {
-    // Look up the command
-    CliCommand *exec = (CliCommand*) list_find((pList*) & cmd->subcommand, next_fn, match_cmd, (void*) name, cli->mutex);
-    return exec;
+    return _find_command(cli, & cmd->subcommand, name);
 }
 
 static void not_found(CLI *cli, const char *cmd)
@@ -183,7 +186,7 @@ static void cli_clear(CLI *cli)
 
 static void _help(CLI *cli, CliCommand *cmd)
 {
-    cli_print(cli, "%s : %s%s", cmd->cmd, cmd->help, cli->eol);
+    cli_print(cli, "%s : %s%s", cmd->cmd, cmd->help ? cmd->help : "", cli->eol);
 }
 
 static int visit_help(pList w, void *arg)
@@ -196,28 +199,41 @@ static int visit_help(pList w, void *arg)
     return 0;
 }
 
-void cli_help(CLI *cli, CliCommand* cmd)
+static void _cli_help(CLI *cli, CliCommand* cmd, CliCommand **head, int offset)
 {
-    UNUSED(cmd);
-    // Is there a subcommand?
-    const char *s = cli->args[1];
+    const char *s = cli_get_arg(cli, offset);
 
     if (s)
     {
-        CliCommand *subcommand = find_command(cli, s);
-        if (subcommand)
+        CliCommand *peer = _find_command(cli, head, s);
+        // if there is a matching subcommand, nest
+        if (peer)
         {
-            _help(cli, subcommand);
-            return;
+            return _cli_help(cli, peer, & peer->subcommand, offset+1);
         }
 
-        // subcommand not found
+        // Can't find the command help has been requested for
         not_found(cli, s);
         return;
     }
 
+    // If the help text is set, print it
+    if (cmd->help)
+    {
+        _help(cli, cmd);
+        return;
+    }
+
     // Call visit_help() on all elements of the list
-    list_visit((pList*) & cli->head, next_fn, visit_help, (void*) cli, cli->mutex);
+    ASSERT(head);
+    list_visit((pList*) head, next_fn, visit_help, (void*) cli, cli->mutex);
+}
+
+void cli_help(CLI *cli, CliCommand* cmd)
+{
+    CliCommand **head = (CliCommand **) cmd->ctx;
+    ASSERT(head);
+    _cli_help(cli, cmd, head, 0);
 }
 
     /*
