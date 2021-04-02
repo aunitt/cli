@@ -44,7 +44,7 @@ static void action_handler(CLI *cli, CliCommand *cmd)
 
 TEST(CLI, Create)
 {
-    static CliCommand action = {
+    CliCommand action = {
         .cmd = "help",
         .handler = action_handler,
         .help = "help text",
@@ -64,12 +64,12 @@ TEST(CLI, Create)
 
 TEST(CLI, Close)
 {
-    static CliCommand action = {
+    CliCommand action = {
         .cmd = "help",
         .handler = action_handler,
         .help = "help text",
     };
-    static CliCommand more = {
+    CliCommand more = {
         .cmd = "more",
         .handler = action_handler,
         .help = "help text",
@@ -104,17 +104,17 @@ TEST(CLI, Help)
 #define HELP1 "another help line"
 #define HELP2 "some more help" 
 
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
         .help = HELP0,
     };
-    static CliCommand a1 = {
+    CliCommand a1 = {
         .cmd = "anything",
         .handler = cli_die,
         .help = HELP1,
     };
-    static CliCommand a2 = {
+    CliCommand a2 = {
         .cmd = "another",
         .handler = cli_die,
         .help = HELP2,
@@ -139,12 +139,12 @@ TEST(CLI, Help)
 
 TEST(CLI, HelpSub)
 {
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
         .help = HELP0,
     };
-    static CliCommand a1 = {
+    CliCommand a1 = {
         .cmd = "anything",
         .handler = cli_die,
         .help = HELP1,
@@ -179,7 +179,7 @@ TEST(CLI, HelpSub)
 
 TEST(CLI, Edit)
 {
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
         .help = "help!",
@@ -220,7 +220,7 @@ void check_ctx(CLI *cli, CliCommand *cmd)
 
 TEST(CLI, Context)
 {
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "help",
         .handler = check_ctx,
         .help = "help!",
@@ -241,7 +241,7 @@ TEST(CLI, Context)
 
 TEST(CLI, EmptyLine)
 {
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
         .help = "help!",
@@ -260,7 +260,7 @@ TEST(CLI, EmptyLine)
 
 TEST(CLI, OverflowLine)
 {
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
         .help = "help!",
@@ -287,20 +287,14 @@ TEST(CLI, OverflowLine)
      *
      */
 
+#if 0
 typedef struct Device
 {
     const char* name;
     bool (*set)(int value);
     int  (*get)();
     bool (*power)(bool on);
-    struct Device *next;
 }   Device;
-
-static pList *next_dev(pList item)
-{
-    Device *dev = (Device*) item;
-    return (pList*) & dev->next;
-}
 
 static int laser_value;
 bool set_laser(int v) { laser_value = v; return true; }
@@ -309,40 +303,32 @@ bool power_laser(bool on) { UNUSED(on); return true; }
 
 static Device laser = { "laser", set_laser, get_laser, 0 };
 
-static pList devices = 0;
-
-static int dev_visit(pList w, void *arg)
+static void dev_power(CLI *cli, CliCommand *cmd)
 {
-    Device *dev = (Device*) w;
-    CLI *cli = (CLI*) arg;
-
-    // Print the device name
-    cli_print(cli, "%s%s", dev->name, cli->eol);
-    return 0;
+    UNUSED(cli);
+    UNUSED(cmd);
 }
 
-static int dev_match(pList w, void *arg)
+static void power(CLI *cli, CliCommand *cmd)
 {
-    Device *dev = (Device*) w;
-    const char *s = (const char*) arg;
-    return strcmp(s, dev->name) == 0;
-}
-
-void power(CLI *cli, CliCommand *cmd)
-{
+    UNUSED(cli);
     UNUSED(cmd);
 
-    // Is there a subcommand?
-    const char *s = strtok_r(0, " ", & cli->strtok_save);
+    const char *s = cli->args[1];
     LOG_DEBUG("'%s'", s);
 
-    if (!strcmp(s, "?"))
+    if (!s)
     {
-        //  List the devices
-        list_visit(& devices, next_dev, dev_visit, cli, 0);
         return;
     }
 
+    if (!strcmp(s, "?"))
+    {
+        cli_help(cli, cmd);
+        return;
+    }
+
+#if 0
     //  Expecting the device name
 
     Device *dev = (Device*) list_find(& devices, next_dev, dev_match, (void*) s, 0);
@@ -388,6 +374,7 @@ void power(CLI *cli, CliCommand *cmd)
     ASSERT(dev->set);
     const bool okay = dev->set((int) v);
     cli_print(cli, "%s%s", okay ? "ok" : "error", cli->eol);
+#endif
 }
 
     /*
@@ -396,12 +383,17 @@ void power(CLI *cli, CliCommand *cmd)
 
 TEST(CLI, Power)
 {
-    list_push(& devices, (pList) & laser, next_dev, 0);
-
-    static CliCommand a0 = {
+    CliCommand s0 = {
+        .cmd = "laser",
+        .handler = dev_power,
+        .help = "laser <on>|<off>|?",
+        .ctx = & laser,
+    };
+    CliCommand a0 = {
         .cmd = "power",
         .handler = power,
-        .help = "power <device> <on>|<off>|?\npower ?",
+        .help = "power <device>|?",
+        .subcommand = & s0,
     };
 
     cli_init(& cli, 64, 0);
@@ -430,6 +422,7 @@ TEST(CLI, Power)
 
     cli_close(& cli);
 }
+#endif
 
     /*
      *
@@ -442,7 +435,7 @@ struct ctx {
 static void hello(CLI *cli, CliCommand *cmd)
 {
     UNUSED(cmd);
-    const char *s = strtok_r(0, " ", & cli->strtok_save);
+    const char *s = cli->args[1];
     EXPECT_STREQ("world", s);
     LOG_DEBUG("%s", s);
 }
@@ -458,12 +451,12 @@ static void bye(CLI *cli, CliCommand *cmd)
 
 TEST(CLI, Input)
 {
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "hello",
         .handler = hello,
         .help = "hello",
     };
-    static CliCommand a1 = {
+    CliCommand a1 = {
         .cmd = "bye",
         .handler = bye,
         .help = "bye",
@@ -509,34 +502,27 @@ static void nowt(CLI *cli, CliCommand *cmd)
     UNUSED(cmd);
 }
 
-static void autocomplete(CLI *cli, CliCommand *cmd)
-{
-    UNUSED(cli);
-    UNUSED(cmd);
-}
-
 TEST(CLI, AutoComplete)
 {
-    static CliCommand a0 = {
+    CliCommand a0 = {
         .cmd = "hello",
         .handler = nowt,
         .help = "hello",
     };
-    static CliCommand a1 = {
+    CliCommand a1 = {
         .cmd = "bye",
         .handler = nowt,
         .help = "bye",
     };
-    static CliCommand a2 = {
+    CliCommand a2 = {
         .cmd = "partial",
         .handler = nowt,
         .help = "partial",
     };
-    static CliCommand a3 = {
+    CliCommand a3 = {
         .cmd = "part",
         .handler = nowt,
         .help = "part",
-        .autocomplete = autocomplete,
     };
 
     cli_init(& cli, 64, 0);

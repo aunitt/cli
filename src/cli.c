@@ -72,6 +72,13 @@ static CliCommand* find_command(CLI *cli, const char* name)
     return exec;
 }
 
+static CliCommand* find_subcommand(CLI *cli, CliCommand *cmd, const char* name)
+{
+    // Look up the command
+    CliCommand *exec = (CliCommand*) list_find((pList*) & cmd->subcommand, next_fn, match_cmd, (void*) name, cli->mutex);
+    return exec;
+}
+
 static void not_found(CLI *cli, const char *cmd)
 {
     cli_print(cli, "'%s' not found%s", cmd, cli->eol);
@@ -81,10 +88,51 @@ static void not_found(CLI *cli, const char *cmd)
      *
      */
 
+static bool run_subcommand(CLI *cli, CliCommand* cmd, int idx)
+{
+    // handle subcommands, if any
+    if (!cmd->subcommand)
+    {
+        return false;
+    }
+
+    const char *s = cli->args[idx];
+    if (!s)
+    {
+        // no args found
+        return false;
+    }
+ 
+    CliCommand *sub = find_subcommand(cli, cmd, s);
+    if (!sub)
+    {
+        // no matching subcommand found
+        return false;
+    }
+
+    printf("%s\r\n", s);
+    return true;
+}
+
 static void cli_execute(CLI *cli)
 {
-    // Extract the first word in the buffer
-    const char* cmd = strtok_r(cli->buff, " ", & cli->strtok_save);
+    // Extract the words in the buffer
+
+    cli->nest = 0;
+    cli->strtok_save = 0;
+    char *s = cli->buff;
+    for (int i = 0; i < CLI_MAX_ARGS; i++)
+    {
+        const char* cmd = strtok_r(s, " ", & cli->strtok_save);
+        cli->args[i] = cmd;
+        if (!cmd)
+        {
+            break;
+        }
+        s = 0;
+    }
+
+    const char *cmd = cli->args[cli->nest++];
 
     if (!cmd)
     {
@@ -104,6 +152,11 @@ static void cli_execute(CLI *cli)
     }
 
     ASSERT(exec);
+
+    if (run_subcommand(cli, exec, cli->nest))
+    {
+        return;
+    }
 
     // Execute the command
     ASSERT(exec->handler);
@@ -139,7 +192,7 @@ void cli_help(CLI *cli, CliCommand* cmd)
 {
     UNUSED(cmd);
     // Is there a subcommand?
-    const char *s = strtok_r(0, " ", & cli->strtok_save);
+    const char *s = cli->args[1];
 
     if (s)
     {

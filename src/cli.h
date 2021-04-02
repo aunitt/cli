@@ -18,10 +18,16 @@ typedef struct CliCommand {
     const char *cmd;
     void (*handler)(struct CLI *cli, struct CliCommand *cmd);
     const char *help;
-    void (*autocomplete)(struct CLI *cli, struct CliCommand *cmd);
-    //struct CliCommand *subcommand; // TODO
+
+    // Subcommands
+    struct CliCommand *subcommand; // TODO
+    void *ctx;
+
+    // linked list when registered to a cli
     struct CliCommand *next;
 }   CliCommand;
+
+#define CLI_MAX_ARGS 8
 
 typedef struct CLI {
     char *buff;
@@ -34,6 +40,10 @@ typedef struct CLI {
     const char* eol;
     struct Mutex *mutex; // can be null
     void *ctx; // context
+
+    // used by cli_execute to break input into parts
+    const char *args[CLI_MAX_ARGS];
+    int nest;
 }   CLI;
 
 void cli_init(CLI *cli, size_t size, void *ctx);
