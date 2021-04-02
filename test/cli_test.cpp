@@ -155,48 +155,50 @@ TEST(CLI, Help)
     cli_close(& cli);
 }
 
-#if 0
 TEST(CLI, HelpSub)
 {
+    CliCommand a2 = {
+        .cmd = "another",
+        .handler = cli_die,
+        .help = HELP2,
+    };
+    CliCommand a1 = {
+        .cmd = "anything",
+        .handler = cli_die,
+        .help = HELP1,
+        .subcommand = & a2,
+    };
     CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
         .help = HELP0,
         .ctx = & cli.head,
     };
-    CliCommand a1 = {
-        .cmd = "anything",
-        .handler = cli_die,
-        .help = HELP1,
-    };
 
     cli_init(& cli, 64, 0);
     cli_register(& cli, & a0);
     cli_register(& cli, & a1);
 
-    // Check help <subcommand>
+    // Check help <command>
     io.reset();
     cli_send(& cli, "help anything\r\n");
-
-    // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
-
-    // Check the output
     EXPECT_STREQ("help anything\r\n" "anything : " HELP1 "\r\n> ", io.get());
 
     // Check help <unknown>
     io.reset();
     cli_send(& cli, "help nowt\r\n");
-
-    // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
-
-    // Check the output
     EXPECT_STREQ("help nowt\r\n" "'nowt' not found\r\n> ", io.get());
+
+    // Check help <command> <subcommand>
+    io.reset();
+    cli_send(& cli, "help anything another\r\n");
+    EXPECT_STREQ("", cli.buff);
+    EXPECT_STREQ("help anything another\r\n" "another : " HELP2 "\r\n> ", io.get());
 
     cli_close(& cli);
 }
-#endif
 
 TEST(CLI, Edit)
 {
