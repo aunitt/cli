@@ -730,8 +730,13 @@ static void echo(CLI *cli, CliCommand *cmd)
             break;
         }
 
-        cli_print(cli, "%s\n", s);
+        if (i)
+        {
+            cli_print(cli, " ");
+        }
+        cli_print(cli, "%s", s);
     }
+    cli_print(cli, "%s", cli->eol);
 }
 
 TEST(CLI, File)
@@ -776,15 +781,70 @@ TEST(CLI, File)
     FILE *f = cli.output;
     fprintf(f, "file test/redirect.txt\r\n");
     fprintf(f, "help one\none : 1111\r\n> ");
-    fprintf(f, "one xx\nxx\n> ");
-    fprintf(f, "two yy\nyy\n> ");
-    fprintf(f, "three zz 1234 5678\nzz\n1234\n5678\n> ");
+    fprintf(f, "one xx\nxx\r\n> ");
+    fprintf(f, "two yy\nyy\r\n> ");
+    fprintf(f, "three zz 1234 5678\nzz 1234 5678\r\n> ");
     fprintf(f, "> ");
 
     EXPECT_STREQ(io.get(), s);
     free(s);
 
     cli_close(& cli);
+}
+
+TEST(CLI, Two)
+{
+    CliCommand a0 = {
+        .cmd = "three",
+        .handler = echo,
+    };
+    CliCommand a1 = {
+        .cmd = "two",
+        .handler = echo,
+    };
+    CliCommand a2 = {
+        .cmd = "one",
+        .handler = echo,
+    };
+
+    CLI cli1 = {
+        .output = cli.output,
+        .prompt = "> ",
+        .eol = "\r\n",
+    };
+    CLI cli2 = {
+        .output = cli.output,
+        .prompt = "> ",
+        .eol = "\r\n",
+    };
+    cli_init(& cli1, 64, 0);
+    cli_init(& cli2, 64, 0);
+
+    CliCommand *head = 0;
+    cli_register(& cli, & head, & a0);
+    cli_register(& cli, & head, & a1);
+    cli_register(& cli, & head, & a2);
+
+    // give both CLI instances the same command tree
+    cli1.head = head;
+    cli2.head = head;
+
+    // check both instances
+
+    io.reset();
+    cli_send(& cli1, "one a b c");
+    EXPECT_STREQ("one a b c", io.get());
+
+    io.reset();
+    cli_send(& cli2, "two");
+    EXPECT_STREQ("two", io.get());
+
+    io.reset();
+    cli_send(& cli1, "\n");
+    EXPECT_STREQ("\na b c\r\n> ", io.get());
+
+    cli_close(& cli1);
+    cli_close(& cli2);
 }
 
 //  FIN
