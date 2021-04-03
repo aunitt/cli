@@ -21,8 +21,7 @@ valgrind: tdd
 
 clean:
 	scons -c
-	rm -rf build tags
-	rm -rf build_arm tags
+	rm -rf build
 
 ctags:
 	ctags -R --exclude=build --exclude=build_arm

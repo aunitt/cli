@@ -52,7 +52,7 @@ TEST(CLI, Create)
 
     got_action = false;
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & action);
+    cli_register(& cli, 0, & action);
 
     // Check that chars are stored in the buffer
     EXPECT_STREQ("", cli.buff);
@@ -77,8 +77,8 @@ TEST(CLI, Close)
 
     got_action = false;
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & action);
-    cli_register(& cli, & more);
+    cli_register(& cli, 0, & action);
+    cli_register(& cli, 0, & more);
 
     // Check that chars are stored in the buffer
     EXPECT_STREQ("", cli.buff);
@@ -122,9 +122,9 @@ TEST(CLI, Help)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & a0);
-    cli_register(& cli, & a1);
-    cli_register(& cli, & a2);
+    cli_register(& cli, 0, & a0);
+    cli_register(& cli, 0, & a1);
+    cli_register(& cli, 0, & a2);
 
     io.reset();
     cli_send(& cli, "help\r\n");
@@ -176,8 +176,8 @@ TEST(CLI, HelpSub)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & a0);
-    cli_register(& cli, & a1);
+    cli_register(& cli, 0, & a0);
+    cli_register(& cli, 0, & a1);
 
     // Check help <command>
     io.reset();
@@ -210,7 +210,7 @@ TEST(CLI, Edit)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & a0);
+    cli_register(& cli, 0, & a0);
 
     io.reset();
     cli_send(& cli, "heldx");
@@ -251,7 +251,7 @@ TEST(CLI, Context)
     };
 
     cli_init(& cli, 64, (void*) ctx_text);
-    cli_register(& cli, & a0);
+    cli_register(& cli, 0, & a0);
 
     ctx_ran = false;
     cli_send(& cli, "help\r\n");
@@ -272,7 +272,7 @@ TEST(CLI, EmptyLine)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & a0);
+    cli_register(& cli, 0, & a0);
 
     cli_send(& cli, "\r\n");
 
@@ -292,7 +292,7 @@ TEST(CLI, OverflowLine)
 
     io.reset();
     cli_init(& cli, 10, 0);
-    cli_register(& cli, & a0);
+    cli_register(& cli, 0, & a0);
 
     for (int i = 0; i < 10; i++)
     {
@@ -376,7 +376,7 @@ TEST(CLI, Power)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & a0);
+    cli_register(& cli, 0, & a0);
 
     // Query the device
     io.reset();
@@ -432,19 +432,17 @@ TEST(CLI, Input)
     CliCommand a0 = {
         .cmd = "hello",
         .handler = hello,
-        .help = "hello",
     };
     CliCommand a1 = {
         .cmd = "bye",
         .handler = bye,
-        .help = "bye",
     };
 
     struct ctx ctx = { .done = false };
 
     cli_init(& cli, 64, & ctx);
-    cli_register(& cli, & a0);
-    cli_register(& cli, & a1);
+    cli_register(& cli, 0, & a0);
+    cli_register(& cli, 0, & a1);
 
     io.reset();
 
@@ -489,40 +487,36 @@ TEST(CLI, AutoComplete)
     CliCommand s1 = {
         .cmd = "two",
         .handler = nowt,
-        .next = & s2,
+        .subcommand = & s2,
     };
     CliCommand s0 = {
         .cmd = "one",
         .handler = nowt,
-        .next = & s1,
+        .subcommand = & s1,
     };
     CliCommand a0 = {
         .cmd = "hello",
         .handler = nowt,
-        .help = "hello",
         .subcommand = & s0,
     };
     CliCommand a1 = {
         .cmd = "bye",
         .handler = nowt,
-        .help = "bye",
     };
     CliCommand a2 = {
         .cmd = "partial",
         .handler = nowt,
-        .help = "partial",
     };
     CliCommand a3 = {
         .cmd = "part",
         .handler = nowt,
-        .help = "part",
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & a0);
-    cli_register(& cli, & a1);
-    cli_register(& cli, & a2);
-    cli_register(& cli, & a3);
+    cli_register(& cli, 0, & a0);
+    cli_register(& cli, 0, & a1);
+    cli_register(& cli, 0, & a2);
+    cli_register(& cli, 0, & a3);
 
     io.reset();
     // should list all the commands
@@ -579,6 +573,27 @@ TEST(CLI, AutoComplete)
     EXPECT_STREQ("hello  one ", io.get());
     cli_send(& cli, "\r\n"); // complete the command
 
+    io.reset();
+    cli_send(& cli, "hello one tw\t");
+    EXPECT_STREQ("hello one two ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    io.reset();
+    cli_send(& cli, "hello one two \t");
+    EXPECT_STREQ("hello one two three ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    io.reset();
+    cli_send(& cli, "hello one two th\t");
+    EXPECT_STREQ("hello one two three ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // no completion possible past error
+    io.reset();
+    cli_send(& cli, "hello one tx\t");
+    EXPECT_STREQ("hello one tx", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
     cli_close(& cli);
 }
 
@@ -595,7 +610,7 @@ static void sub(CLI *cli, CliCommand *cmd)
     cli_print(cli, "got %s '%s' %d\r\n", cmd->cmd, s, v);
 }
 
-TEST(Cli, Subcommand)
+TEST(CLI, Subcommand)
 {
     int i0 = 3;
     CliCommand a0 = {
@@ -627,7 +642,7 @@ TEST(Cli, Subcommand)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, & a3);
+    cli_register(& cli, 0, & a3);
 
     io.reset();
 
@@ -662,6 +677,112 @@ TEST(Cli, Subcommand)
     io.reset();
     cli_send(& cli, "top one two three xx\r\n");
     EXPECT_STREQ("top one two three xx\r\ngot three 'xx' 3\r\n> ", io.get());
+
+    cli_close(& cli);
+}
+
+static void cli_source(CLI *cli, CliCommand *cmd)
+{
+    UNUSED(cmd);
+
+    const char* fname = cli_get_arg(cli, 0);
+    if (!fname)
+    {
+        cli_print(cli, "no file specified");
+        return;
+    }
+
+    FILE *f = fopen(fname, "r");
+    if (!f)
+    {
+        cli_print(cli, "error opening file '%s'", fname);
+        return;
+    }
+
+    cli_clear(cli);
+
+    while (!feof(f))
+    {
+        char buff[32];
+        char *s = fgets(buff, sizeof(buff), f);
+        if (!s)
+        {
+            break;
+        }
+
+        for (; *s; s++)
+        {
+            cli_process(cli, *s);
+        }
+    }
+
+    fclose(f);
+}
+
+static void echo(CLI *cli, CliCommand *cmd)
+{
+    UNUSED(cmd);
+    for (int i = 0; ; i++)
+    {
+        const char *s = cli_get_arg(cli, i);
+        if (!s)
+        {
+            break;
+        }
+
+        cli_print(cli, "%s\n", s);
+    }
+}
+
+TEST(CLI, File)
+{
+    CliCommand a0 = {
+        .cmd = "three",
+        .handler = echo,
+    };
+    CliCommand a1 = {
+        .cmd = "two",
+        .handler = echo,
+    };
+    CliCommand a2 = {
+        .cmd = "one",
+        .handler = echo,
+        .help = "1111",
+    };
+    CliCommand a3 = {
+        .cmd = "file",
+        .handler = cli_source,
+    };
+    CliCommand a4 = {
+        .cmd = "help",
+        .handler = cli_help,
+        .ctx = & cli.head, 
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, 0, & a4);
+    cli_register(& cli, 0, & a3);
+    cli_register(& cli, 0, & a2);
+    cli_register(& cli, 0, & a1);
+    cli_register(& cli, 0, & a0);
+
+    io.reset();
+    cli_send(& cli, "file test/redirect.txt\r\n");
+
+    char *s = strdup(io.get());
+    io.reset();
+
+    // Mimic the output
+    FILE *f = cli.output;
+    fprintf(f, "file test/redirect.txt\r\n");
+    fprintf(f, "help one\none : 1111\r\n> ");
+    fprintf(f, "one xx\nxx\n> ");
+    fprintf(f, "two yy\nyy\n> ");
+    fprintf(f, "three zz 1234 5678\nzz\n1234\n5678\n> ");
+    fprintf(f, "> ");
+
+    EXPECT_STREQ(io.get(), s);
+    free(s);
 
     cli_close(& cli);
 }

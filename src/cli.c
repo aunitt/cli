@@ -48,9 +48,10 @@ void cli_init(CLI *cli, size_t size, void *ctx)
      *
      */
 
-void cli_register(CLI *cli, CliCommand *cmd)
+void cli_register(CLI *cli, CliCommand **head, CliCommand *cmd)
 {
-    list_append((pList*) & cli->head, (pList) cmd, next_fn, cli->mutex);
+    head = head? head : & cli->head;
+    list_append((pList*) head, (pList) cmd, next_fn, cli->mutex);
 }
 
     /*
@@ -173,7 +174,7 @@ static void cli_execute(CLI *cli)
     run_command(cli, exec);
 }
 
-static void cli_clear(CLI *cli)
+void cli_clear(CLI *cli)
 {
     cli->cursor = 0;
     cli->buff[0] = '\0';
@@ -329,7 +330,7 @@ void cli_autocomplete(CLI *cli)
         // Single match. autocomplete this
         CliCommand *cmd = ac.last;
         // offset into the sole matching command
-        ASSERT(cli->cursor > ac.offset);
+        ASSERT(cli->cursor >= ac.offset);
         const size_t offset = cli->cursor - ac.offset;
         const char *s = & cmd->cmd[offset];
         for (; *s; s++)
