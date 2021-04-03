@@ -245,6 +245,8 @@ struct autocomplete
     CLI *cli;
     CliCommand *last;
     int count;
+    int complete;
+    size_t offset;
     bool print;
 };
 
@@ -257,7 +259,30 @@ static int visit_auto(pList w, void *arg)
     struct autocomplete *ac = (struct autocomplete *) arg;
     CLI *cli = ac->cli;
 
-    if (!strncmp(cli->buff, cmd->cmd, (size_t) cli->cursor))
+    ASSERT(cli->cursor >= ac->offset);
+    const char *s = & cli->buff[ac->offset];
+
+    // are there any spaces in the command?
+    const char *space = strchr(s, ' ');
+    // completion with spaces needs to resolve the complete commands
+    if (space)
+    {
+        if (!strncmp(s, cmd->cmd, (size_t) (space - s)))
+        {
+            // match this one completely typed command
+            ac->last = cmd;
+            ac->count = 1;
+            // skip over all trailing ' ' for the next comparison
+            for (; *space == ' '; space++)
+                ;
+            ac->offset += (size_t) (space - s);
+            ac->complete += 1;
+            return 1;
+        }
+        return 0;
+    }
+
+    if (!strncmp(s, cmd->cmd, (size_t) (cli->cursor - ac->offset)))
     {
         // matches the command so far
         ac->last = cmd;
@@ -275,9 +300,23 @@ static int visit_auto(pList w, void *arg)
 void cli_autocomplete(CLI *cli)
 {
     // Check for partial match of command handlers
-    struct autocomplete ac = { .cli = cli, .count = 0, .last = 0, .print = false };
+    struct autocomplete ac = { .cli = cli, .complete = 0, .offset = 0, .print = false };
 
-    list_visit((pList*) & cli->head, next_fn, visit_auto, (void*) & ac, cli->mutex);
+    CliCommand **head = & cli->head;
+
+    while (true)
+    {
+        ac.count = 0;
+        ac.last = 0;
+        CliCommand *cmd = (CliCommand *) list_find((pList*) head, next_fn, visit_auto, (void*) & ac, cli->mutex);
+        if (!cmd)
+        {
+            break;
+        }
+
+        // found completed this command. search for subcommands
+        head = & cmd->subcommand;
+    }
 
     if (ac.count == 0)
     {
@@ -289,8 +328,10 @@ void cli_autocomplete(CLI *cli)
     {
         // Single match. autocomplete this
         CliCommand *cmd = ac.last;
-        ASSERT(strlen(cmd->cmd) >= (size_t) cli->cursor);
-        const char *s = & cmd->cmd[cli->cursor];
+        // offset into the sole matching command
+        ASSERT(cli->cursor > ac.offset);
+        const size_t offset = cli->cursor - ac.offset;
+        const char *s = & cmd->cmd[offset];
         for (; *s; s++)
         {
             cli_process(cli, *s);

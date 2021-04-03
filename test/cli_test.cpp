@@ -569,13 +569,16 @@ TEST(CLI, AutoComplete)
 
     // test autocomplete for subcommands
 
-#if 0
     io.reset();
     cli_send(& cli, "hello o\t");
-    EXPECT_STREQ("hello one", io.get());
+    EXPECT_STREQ("hello one ", io.get());
     cli_send(& cli, "\r\n"); // complete the command
 
-#endif
+    io.reset();
+    cli_send(& cli, "hello  o\t");
+    EXPECT_STREQ("hello  one ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
     cli_close(& cli);
 }
 
