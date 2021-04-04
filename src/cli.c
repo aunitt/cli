@@ -409,10 +409,8 @@ static void cli_backspace(CLI *cli)
     }
 
     // move chars down one
-    for (size_t i = cli->cursor-1; i < cli->end; i++)
-    {
-        cli->buff[i] = cli->buff[i+1];
-    }
+    memmove(& cli->buff[cli->cursor-1], & cli->buff[cli->cursor], cli->end - cli->cursor);
+
     cli->end -= 1;
     cli->buff[cli->end] = '\0';
     cli->cursor -= 1;
@@ -482,11 +480,8 @@ void cli_process(CLI *cli, char c)
 
     if (cli->cursor != cli->end)
     {
-        // move the reset of the buffer up one char
-        for (size_t i = cli->end; i >= cli->cursor; i--)
-        {
-            cli->buff[i+1] = cli->buff[i];
-        }
+        // Move the rest of the buffer up one
+        memmove(& cli->buff[cli->cursor+1], & cli->buff[cli->cursor], cli->end - cli->cursor);
     }
 
     // Append / insert the char
