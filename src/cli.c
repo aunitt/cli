@@ -149,11 +149,11 @@ static void cli_execute(CLI *cli)
     // Extract the words in the buffer
 
     cli->nest = 0;
-    cli->strtok_save = 0;
+    char *save = 0;
     char *s = cli->buff;
     for (int i = 0; i < CLI_MAX_ARGS; i++)
     {
-        const char* cmd = strtok_r(s, " ", & cli->strtok_save);
+        const char* cmd = strtok_r(s, " ", & save);
         cli->args[i] = cmd;
         if (!cmd)
         {

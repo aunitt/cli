@@ -33,7 +33,6 @@ typedef struct CLI {
     char *buff;
     size_t size;
     size_t end;
-    char *strtok_save;
     size_t cursor;
     bool escape;
 
