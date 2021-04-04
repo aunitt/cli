@@ -379,8 +379,8 @@ static void cli_edit(CLI *cli, char c)
         {
             if (cli->cursor < cli->end)
             {
+                cli_print(cli, "%c", cli->buff[cli->cursor]);
                 cli->cursor += 1;
-                // TODO
             }
             break;
         }
@@ -394,32 +394,31 @@ static void cli_edit(CLI *cli, char c)
             break;
         }
         default:    //  ignore all other ESC codes
-            return;
+        {
+            break;
+        }
     }
 }
 
 static void cli_backspace(CLI *cli)
 {
-    if (cli->end > 0)
+    if (cli->cursor == 0)
     {
-        // move chars down one
-        for (size_t i = cli->cursor; i < cli->end; i++)
-        {
-            cli->buff[i] = cli->buff[i+1];
-        }
-        if (cli->end)
-        {
-            cli->end -= 1;
-            cli->buff[cli->end] = '\0';
-        }
-        if (cli->cursor)
-        {
-            // overwrite the deleted char
-            cli_print(cli, " \b");
-            cli->cursor -= 1;
-        }
-        cli_draw_to_end(cli);
+        // nothing to delete
+        return;
     }
+
+    // move chars down one
+    for (size_t i = cli->cursor-1; i < cli->end; i++)
+    {
+        cli->buff[i] = cli->buff[i+1];
+    }
+    cli->end -= 1;
+    cli->buff[cli->end] = '\0';
+    cli->cursor -= 1;
+    // overwrite the deleted char
+    cli_print(cli, " \b");
+    cli_draw_to_end(cli);
 }
 
     /*
@@ -481,8 +480,18 @@ void cli_process(CLI *cli, char c)
         return;
     }
 
-    // Buffer the char and return
-    cli->buff[cli->end] = c;
+    if (cli->cursor != cli->end)
+    {
+        // move the reset of the buffer up one char
+        for (size_t i = cli->end; i >= cli->cursor; i--)
+        {
+            cli->buff[i+1] = cli->buff[i];
+        }
+    }
+
+    // Append / insert the char
+    cli->buff[cli->cursor] = c;
+
     cli->end += 1;
     cli->cursor += 1;
     cli->buff[cli->end] = '\0';
@@ -503,10 +512,7 @@ void cli_close(CLI *cli)
     cli->buff = 0;
 
     // Unlink all the actions
-    while (cli->head)
-    {
-        list_remove((pList*) & cli->head, (pList) cli->head, next_fn, cli->mutex); 
-    }
+    cli->head = 0;
 }
 
 //  FIN

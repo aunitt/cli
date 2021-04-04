@@ -87,8 +87,7 @@ TEST(CLI, Close)
 
     cli_close(& cli);
     // Check the actions are unlinked
-    EXPECT_EQ(action.next, (void*)0);
-    EXPECT_EQ(more.next, (void*)0);
+    EXPECT_EQ(cli.head, (void*)0);
 }
 
 static void cli_die(CLI *cli, CliCommand *cmd)
@@ -910,7 +909,111 @@ TEST(CLI, Edit)
     // test insert
     io.reset();
     cli_send(& cli, "X");
-    //EXPECT_STREQ("Xlp\b\b", io.get());
+    EXPECT_STREQ("heXlp", cli.buff);
+    EXPECT_STREQ("Xlp\b\b", io.get());
+    EXPECT_EQ(5, cli.end);
+    EXPECT_EQ(3, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "Y");
+    EXPECT_STREQ("heXYlp", cli.buff);
+    EXPECT_STREQ("Ylp\b\b", io.get());
+    EXPECT_EQ(6, cli.end);
+    EXPECT_EQ(4, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eD");
+    EXPECT_STREQ("\b", io.get());
+    EXPECT_STREQ("heXYlp", cli.buff);
+    EXPECT_EQ(6, cli.end);
+    EXPECT_EQ(3, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\b");
+    EXPECT_STREQ("\b \bYlp\b\b\b", io.get());
+    EXPECT_STREQ("heYlp", cli.buff);
+    EXPECT_EQ(5, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eC");
+    EXPECT_STREQ("Y", io.get());
+    EXPECT_STREQ("heYlp", cli.buff);
+    EXPECT_EQ(5, cli.end);
+    EXPECT_EQ(3, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\b");
+    EXPECT_STREQ("\b \blp\b\b", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eD");
+    EXPECT_STREQ("\b", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(1, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eD");
+    EXPECT_STREQ("\b", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(0, cli.cursor);
+
+    // << to the start of line
+    io.reset();
+    cli_send(& cli, "\eD");
+    EXPECT_STREQ("", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(0, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eC");
+    EXPECT_STREQ("h", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(1, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eC");
+    EXPECT_STREQ("e", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eC");
+    EXPECT_STREQ("l", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(3, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eC");
+    EXPECT_STREQ("p", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(4, cli.cursor);
+
+    // >> at end of line, do nothing
+    io.reset();
+    cli_send(& cli, "\eC");
+    EXPECT_STREQ("", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(4, cli.cursor);
+
+    // insert at end of line
+    io.reset();
+    cli_send(& cli, "x");
+    EXPECT_STREQ("x", io.get());
+    EXPECT_STREQ("helpx", cli.buff);
+    EXPECT_EQ(5, cli.end);
+    EXPECT_EQ(5, cli.cursor);
 
     cli_close(& cli);
 }
