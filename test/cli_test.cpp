@@ -216,18 +216,36 @@ TEST(CLI, Backspace)
     cli_send(& cli, "heldx");
     EXPECT_STREQ("heldx", cli.buff);
     EXPECT_STREQ("heldx", io.get());
+    EXPECT_EQ(5, cli.end);
+    EXPECT_EQ(5, cli.cursor);
 
+    io.reset();
     cli_send(& cli, "\b");
     EXPECT_STREQ("held", cli.buff);
-    EXPECT_STREQ("heldx\b \b", io.get());
+    EXPECT_STREQ("\b \b", io.get());
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(4, cli.cursor);
 
+    io.reset();
     cli_send(& cli, "\b");
     EXPECT_STREQ("hel", cli.buff);
-    EXPECT_STREQ("heldx\b \b\b \b", io.get());
+    EXPECT_STREQ("\b \b", io.get());
+    EXPECT_EQ(3, cli.end);
+    EXPECT_EQ(3, cli.cursor);
 
     cli_send(& cli, "p\r\n");
     // Buffer should be cleared
     EXPECT_STREQ("", cli.buff);
+    EXPECT_EQ(0, cli.end);
+    EXPECT_EQ(0, cli.cursor);
+
+    // backspace on empty buffer does nothing
+    io.reset();
+    cli_send(& cli, "\b");
+    EXPECT_STREQ("\b", io.get());
+    EXPECT_STREQ("", cli.buff);
+    EXPECT_EQ(0, cli.end);
+    EXPECT_EQ(0, cli.cursor);
 
     cli_close(& cli);
 }
@@ -851,6 +869,50 @@ TEST(CLI, Two)
 
     cli_close(& cli1);
     cli_close(& cli2);
+}
+
+    /*
+     *
+     */
+
+TEST(CLI, Edit)
+{
+    CliCommand a0 = {
+        .cmd = "nowt",
+        .handler = nowt,
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, 0, & a0);
+
+    io.reset();
+    cli_send(& cli, "help");
+    EXPECT_STREQ("help", io.get());
+    EXPECT_STREQ("help", cli.buff);
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(4, cli.cursor);
+
+    // \eD cursor left
+    // \eC cursor right
+
+    io.reset();
+    cli_send(& cli, "\eD");
+    EXPECT_STREQ("\b", io.get());
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(3, cli.cursor);
+
+    io.reset();
+    cli_send(& cli, "\eD");
+    EXPECT_STREQ("\b", io.get());
+    EXPECT_EQ(4, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    // test insert
+    io.reset();
+    cli_send(& cli, "X");
+    //EXPECT_STREQ("Xlp\b\b", io.get());
+
+    cli_close(& cli);
 }
 
 //  FIN

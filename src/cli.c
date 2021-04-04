@@ -30,15 +30,25 @@ void cli_print(CLI *cli, const char *fmt, ...)
     va_end(va);
 }
 
+void cli_clear(CLI *cli)
+{
+    cli->end = 0;
+    cli->cursor = 0;
+    cli->escape = false;
+    cli->buff[0] = '\0';
+    cli->nest = 0;
+}
+
 void cli_init(CLI *cli, size_t size, void *ctx)
 {
     ASSERT(size);
     cli->buff = (char*) malloc(size+1);
     cli->buff[0] = '\0';
     cli->size = size;
-    cli->end = 0;
     cli->head = 0;
     cli->ctx = ctx;
+
+    cli_clear(cli);
 
     // Start with the initial prompt
     cli_print(cli, "%s", cli->prompt);
@@ -172,13 +182,6 @@ static void cli_execute(CLI *cli)
     }
 
     run_command(cli, exec);
-}
-
-void cli_clear(CLI *cli)
-{
-    cli->end = 0;
-    cli->buff[0] = '\0';
-    cli->nest = 0;
 }
 
     /*
@@ -354,6 +357,75 @@ void cli_autocomplete(CLI *cli)
      *
      */
 
+static void cli_draw_to_end(CLI *cli)
+{
+    const size_t more = cli->end - cli->cursor;
+
+    if (more)
+    {
+        cli_print(cli, "%s", & cli->buff[cli->cursor]);
+    }
+    for (size_t i = 0; i < more; i++)
+    {
+        cli_print(cli, "\b");
+    }
+}
+
+static void cli_edit(CLI *cli, char c)
+{
+    switch (c)
+    {
+        case 'C'    :   // cursor right
+        {
+            if (cli->cursor < cli->end)
+            {
+                cli->cursor += 1;
+                // TODO
+            }
+            break;
+        }
+        case 'D'    :   // cursor left
+        {
+            if (cli->cursor > 0)
+            {
+                cli_print(cli, "\b");
+                cli->cursor -= 1;
+            }
+            break;
+        }
+        default:    //  ignore all other ESC codes
+            return;
+    }
+}
+
+static void cli_backspace(CLI *cli)
+{
+    if (cli->end > 0)
+    {
+        // move chars down one
+        for (size_t i = cli->cursor; i < cli->end; i++)
+        {
+            cli->buff[i] = cli->buff[i+1];
+        }
+        if (cli->end)
+        {
+            cli->end -= 1;
+            cli->buff[cli->end] = '\0';
+        }
+        if (cli->cursor)
+        {
+            // overwrite the deleted char
+            cli_print(cli, " \b");
+            cli->cursor -= 1;
+        }
+        cli_draw_to_end(cli);
+    }
+}
+
+    /*
+     *
+     */
+
 void cli_process(CLI *cli, char c)
 {
     if (((size_t)(cli->end + 1)) >= cli->size)
@@ -361,6 +433,20 @@ void cli_process(CLI *cli, char c)
         //  line is full : ERROR
         cli_clear(cli);
         cli_print(cli, "%s%s", cli->eol, cli->prompt);
+        return;
+    }
+
+    if (cli->escape)
+    {
+        // Process cursor commands
+        cli_edit(cli, c);
+        cli->escape = false;
+        return;
+    }
+
+    if (c == 0x1b) // ASCII ESC
+    {
+        cli->escape = true;
         return;
     }
 
@@ -382,14 +468,7 @@ void cli_process(CLI *cli, char c)
     // handle backspace
     if (c == '\b')
     {
-        if (cli->end > 0)
-        {
-            // delete the last char
-            cli->end -= 1;
-            cli->buff[cli->end] = '\0';
-            // overwrite the deleted char
-            cli_print(cli, " \b");
-        }
+        cli_backspace(cli);
         return;
     }
 
@@ -405,7 +484,9 @@ void cli_process(CLI *cli, char c)
     // Buffer the char and return
     cli->buff[cli->end] = c;
     cli->end += 1;
+    cli->cursor += 1;
     cli->buff[cli->end] = '\0';
+    cli_draw_to_end(cli);
 }
 
     /*

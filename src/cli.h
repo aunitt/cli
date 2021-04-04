@@ -34,6 +34,9 @@ typedef struct CLI {
     size_t size;
     size_t end;
     char *strtok_save;
+    size_t cursor;
+    bool escape;
+
     CliCommand *head;
     FILE *output;
     const char* prompt;
