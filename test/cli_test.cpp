@@ -528,17 +528,37 @@ TEST(CLI, AutoComplete)
         .cmd = "part",
         .handler = nowt,
     };
+    CliCommand x0 = {
+        .cmd = "xx",
+        .handler = nowt,
+    };
+    CliCommand x1 = {
+        .cmd = "yy",
+        .handler = nowt,
+        .next = & x0,
+    };
+    CliCommand x2 = {
+        .cmd = "zz",
+        .handler = nowt,
+        .next = & x1,
+    };
+    CliCommand a4 = {
+        .cmd = "abcd",
+        .handler = nowt,
+        .subcommand = & x2,
+    };
 
     cli_init(& cli, 64, 0);
     cli_register(& cli, 0, & a0);
     cli_register(& cli, 0, & a1);
     cli_register(& cli, 0, & a2);
     cli_register(& cli, 0, & a3);
+    cli_register(& cli, 0, & a4);
 
     io.reset();
     // should list all the commands
     cli_process(& cli, '\t');
-    EXPECT_STREQ("\r\nhello\r\nbye\r\npartial\r\npart\r\n> ", io.get());
+    EXPECT_STREQ("\r\nhello\r\nbye\r\npartial\r\npart\r\nabcd\r\n> ", io.get());
 
     // 'h' '\t' should complete 'hello '
     io.reset();
@@ -609,6 +629,22 @@ TEST(CLI, AutoComplete)
     io.reset();
     cli_send(& cli, "hello one tx\t");
     EXPECT_STREQ("hello one tx", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    // complete 'hello' command
+    io.reset();
+    cli_send(& cli, "hello\t");
+    EXPECT_STREQ("hello ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    io.reset();
+    cli_send(& cli, "hello \t");
+    EXPECT_STREQ("hello one ", io.get());
+    cli_send(& cli, "\r\n"); // complete the command
+
+    io.reset();
+    cli_send(& cli, "abcd \t");
+    EXPECT_STREQ("abcd \r\nzz\r\nyy\r\nxx\r\n> abcd ", io.get());
     cli_send(& cli, "\r\n"); // complete the command
 
     cli_close(& cli);

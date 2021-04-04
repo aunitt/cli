@@ -310,6 +310,7 @@ void cli_autocomplete(CLI *cli)
 
     while (true)
     {
+        // search through the ' ' seperated list of commands so far ..
         ac.count = 0;
         ac.last = 0;
         CliCommand *cmd = (CliCommand *) list_find((pList*) head, next_fn, visit_auto, (void*) & ac, cli->mutex);
@@ -347,7 +348,7 @@ void cli_autocomplete(CLI *cli)
     // Print the partial matches
     ac.print = true;
     cli_print(cli, "%s", cli->eol);
-    list_visit((pList*) & cli->head, next_fn, visit_auto, (void*) & ac, cli->mutex);
+    list_visit((pList*) head, next_fn, visit_auto, (void*) & ac, cli->mutex);
     cli_print(cli, "%s", cli->prompt);
     // restore the buffer so far ..
     cli_print(cli, "%s", cli->buff);
