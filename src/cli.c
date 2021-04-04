@@ -13,8 +13,8 @@ static pList* next_fn(pList item)
     return (pList*) & cmd->next;
 }
 
-    /*
-     *
+    /**
+     * @brief printf style output 
      */
 
 void cli_print(CLI *cli, const char *fmt, ...)
@@ -30,6 +30,10 @@ void cli_print(CLI *cli, const char *fmt, ...)
     va_end(va);
 }
 
+    /**
+     * @brief reset the CLI buffer / cursor
+     */
+
 void cli_clear(CLI *cli)
 {
     cli->end = 0;
@@ -38,6 +42,14 @@ void cli_clear(CLI *cli)
     cli->buff[0] = '\0';
     cli->nest = 0;
 }
+
+    /**
+     * @brief initialise the CLI structure
+     *
+     * allocates a text buffer \a size chars long
+     *
+     * sets the context CLI.ctx to \a ctx
+     */
 
 void cli_init(CLI *cli, size_t size, void *ctx)
 {
@@ -54,8 +66,12 @@ void cli_init(CLI *cli, size_t size, void *ctx)
     cli_print(cli, "%s", cli->prompt);
 }
 
-    /*
+    /**
+     * @brief Inserts command \a cmd at the head of the command list
      *
+     * @param cli the CLI struct
+     * @param the head of the command list, or 0 for CLI.head
+     * @param cmd the command to insert
      */
 
 void cli_register(CLI *cli, CliCommand **head, CliCommand *cmd)
@@ -236,6 +252,16 @@ static void _cli_help(CLI *cli, CliCommand* cmd, CliCommand **head, int offset)
     list_visit((pList*) head, next_fn, visit_help, (void*) cli, cli->mutex);
 }
 
+    /**
+     * @brief print help for the command \a cmd
+     *
+     * @param cli the CLI struct
+     * @param cmd this command (usually 'help')
+     *
+     * The command.ctx pointer must point to the head of the list
+     * of commands to provide help for.
+     */
+
 void cli_help(CLI *cli, CliCommand* cmd)
 {
     CliCommand **head = (CliCommand **) cmd->ctx;
@@ -304,7 +330,7 @@ static int visit_auto(pList w, void *arg)
     return 0;
 }
 
-void cli_autocomplete(CLI *cli)
+static void cli_autocomplete(CLI *cli)
 {
     // Check for partial match of command handlers
     struct autocomplete ac = { .cli = cli, .complete = 0, .offset = 0, .print = false };
@@ -423,8 +449,8 @@ static void cli_backspace(CLI *cli)
     cli_draw_to_end(cli);
 }
 
-    /*
-     *
+    /**
+     * @brief send char \a c to the command interpreter
      */
 
 void cli_process(CLI *cli, char c)
@@ -497,8 +523,8 @@ void cli_process(CLI *cli, char c)
     cli_draw_to_end(cli);
 }
 
-    /*
-     *
+    /**
+     * @brief close the CLI command and free allocated data
      */
 
 void cli_close(CLI *cli)
