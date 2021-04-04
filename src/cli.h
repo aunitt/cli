@@ -32,7 +32,7 @@ typedef struct CliCommand {
 typedef struct CLI {
     char *buff;
     size_t size;
-    size_t cursor;
+    size_t end;
     char *strtok_save;
     CliCommand *head;
     FILE *output;

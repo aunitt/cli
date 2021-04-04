@@ -36,7 +36,7 @@ void cli_init(CLI *cli, size_t size, void *ctx)
     cli->buff = (char*) malloc(size+1);
     cli->buff[0] = '\0';
     cli->size = size;
-    cli->cursor = 0;
+    cli->end = 0;
     cli->head = 0;
     cli->ctx = ctx;
 
@@ -176,7 +176,7 @@ static void cli_execute(CLI *cli)
 
 void cli_clear(CLI *cli)
 {
-    cli->cursor = 0;
+    cli->end = 0;
     cli->buff[0] = '\0';
     cli->nest = 0;
 }
@@ -260,7 +260,7 @@ static int visit_auto(pList w, void *arg)
     struct autocomplete *ac = (struct autocomplete *) arg;
     CLI *cli = ac->cli;
 
-    ASSERT(cli->cursor >= ac->offset);
+    ASSERT(cli->end >= ac->offset);
     const char *s = & cli->buff[ac->offset];
 
     // are there any spaces in the command?
@@ -283,7 +283,7 @@ static int visit_auto(pList w, void *arg)
         return 0;
     }
 
-    if (!strncmp(s, cmd->cmd, (size_t) (cli->cursor - ac->offset)))
+    if (!strncmp(s, cmd->cmd, (size_t) (cli->end - ac->offset)))
     {
         // matches the command so far
         ac->last = cmd;
@@ -330,8 +330,8 @@ void cli_autocomplete(CLI *cli)
         // Single match. autocomplete this
         CliCommand *cmd = ac.last;
         // offset into the sole matching command
-        ASSERT(cli->cursor >= ac.offset);
-        const size_t offset = cli->cursor - ac.offset;
+        ASSERT(cli->end >= ac.offset);
+        const size_t offset = cli->end - ac.offset;
         const char *s = & cmd->cmd[offset];
         for (; *s; s++)
         {
@@ -356,7 +356,7 @@ void cli_autocomplete(CLI *cli)
 
 void cli_process(CLI *cli, char c)
 {
-    if (((size_t)(cli->cursor + 1)) >= cli->size)
+    if (((size_t)(cli->end + 1)) >= cli->size)
     {
         //  line is full : ERROR
         cli_clear(cli);
@@ -382,11 +382,11 @@ void cli_process(CLI *cli, char c)
     // handle backspace
     if (c == '\b')
     {
-        if (cli->cursor > 0)
+        if (cli->end > 0)
         {
             // delete the last char
-            cli->cursor -= 1;
-            cli->buff[cli->cursor] = '\0';
+            cli->end -= 1;
+            cli->buff[cli->end] = '\0';
             // overwrite the deleted char
             cli_print(cli, " \b");
         }
@@ -403,9 +403,9 @@ void cli_process(CLI *cli, char c)
     }
 
     // Buffer the char and return
-    cli->buff[cli->cursor] = c;
-    cli->cursor += 1;
-    cli->buff[cli->cursor] = '\0';
+    cli->buff[cli->end] = c;
+    cli->end += 1;
+    cli->buff[cli->end] = '\0';
 }
 
     /*
