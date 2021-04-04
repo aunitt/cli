@@ -116,32 +116,35 @@ const char* cli_get_arg(CLI *cli, int offset)
 
 static bool run_command(CLI *cli, CliCommand* cmd)
 {
-    if (!cmd->subcommand)
+    while (true)
     {
-        // Execute the command
-        return execute(cli, cmd);
-    }
+        if (!cmd->subcommand)
+        {
+            // Execute the command
+            return execute(cli, cmd);
+        }
 
-    const char *s = cli_get_arg(cli, 0);
- 
-    if (!s)
-    {
-        // no args found
-        return execute(cli, cmd);
-    }
- 
-    // search subcommands looking or a match
-    CliCommand *sub = find_subcommand(cli, cmd, s);
-    if (!sub)
-    {
-        // no matching subcommand found
-        return execute(cli, cmd);
-    }
+        const char *s = cli_get_arg(cli, 0);
+     
+        if (!s)
+        {
+            // no args found
+            return execute(cli, cmd);
+        }
+     
+        // search subcommands looking or a match
+        CliCommand *sub = find_subcommand(cli, cmd, s);
+        if (!sub)
+        {
+            // no matching subcommand found
+            return execute(cli, cmd);
+        }
 
-    // if we have positively found a subcommand, increment the nest
-    cli->nest += 1;
-    // found a matching subcommand
-    return run_command(cli, sub);
+        // if we have positively found a subcommand, increment the nest
+        cli->nest += 1;
+        // test the matching subcommand
+        cmd = sub;
+    }
 }
 
 static void cli_execute(CLI *cli)
