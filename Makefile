@@ -1,5 +1,5 @@
 
-.PHONY: ctags
+.PHONY: ctags doxygen
 
 all:
 	scons
@@ -21,9 +21,12 @@ valgrind: tdd
 
 clean:
 	scons -c
-	rm -rf build
+	rm -rf build html latex
 
 ctags:
 	ctags -R --exclude=build --exclude=build_arm
+
+doxygen:
+	doxygen
 
 # FIN
