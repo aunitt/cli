@@ -200,7 +200,7 @@ TEST(CLI, HelpSub)
     cli_close(& cli);
 }
 
-TEST(CLI, Edit)
+TEST(CLI, Backspace)
 {
     CliCommand a0 = {
         .cmd = "help",
@@ -839,9 +839,15 @@ TEST(CLI, Two)
     cli_send(& cli2, "two");
     EXPECT_STREQ("two", io.get());
 
+    // complete the command in the first instance
     io.reset();
     cli_send(& cli1, "\n");
     EXPECT_STREQ("\na b c\r\n> ", io.get());
+
+    // complete the command in the second instance
+    io.reset();
+    cli_send(& cli2, " xx\n");
+    EXPECT_STREQ(" xx\nxx\r\n> ", io.get());
 
     cli_close(& cli1);
     cli_close(& cli2);
