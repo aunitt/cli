@@ -51,7 +51,8 @@ typedef struct CLI {
 void cli_init(CLI *cli, size_t size, void *ctx);
 void cli_close(CLI *cli);
 
-void cli_register(CLI *cli, CliCommand **head, CliCommand *cmd);
+void cli_register(CLI *cli, CliCommand *cmd);
+void cli_insert(CLI *cli, CliCommand **head, CliCommand *cmd);
 void cli_process(CLI *cli, char c);
 
 void cli_print(CLI *cli, const char *fmt, ...) __attribute__((format(printf,2,3)));

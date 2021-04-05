@@ -66,18 +66,22 @@ void cli_init(CLI *cli, size_t size, void *ctx)
     cli_print(cli, "%s", cli->prompt);
 }
 
+void cli_insert(CLI *cli, CliCommand **head, CliCommand *cmd)
+{
+    ASSERT(head);
+    list_push((pList*) head, (pList) cmd, next_fn, cli->mutex);
+}
+
     /**
      * @brief Inserts command \a cmd at the head of the command list
      *
      * @param cli the CLI struct
-     * @param the head of the command list, or 0 for CLI.head
      * @param cmd the command to insert
      */
 
-void cli_register(CLI *cli, CliCommand **head, CliCommand *cmd)
+void cli_register(CLI *cli, CliCommand *cmd)
 {
-    head = head? head : & cli->head;
-    list_append((pList*) head, (pList) cmd, next_fn, cli->mutex);
+    cli_insert(cli, & cli->head, cmd);
 }
 
     /*
