@@ -61,6 +61,8 @@ void cli_clear(CLI *cli);
 // Default 'help' command handler
 void cli_help(CLI *cli, CliCommand* cmd);
 
+void cli_nowt(CLI *cli, CliCommand *cmd);
+
 const char* cli_get_arg(CLI *cli, int offset);
 
 #if defined(__cplusplus)

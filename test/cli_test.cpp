@@ -483,62 +483,56 @@ TEST(CLI, Input)
      *
      */
 
-static void nowt(CLI *cli, CliCommand *cmd)
-{
-    UNUSED(cli);
-    UNUSED(cmd);
-}
-
 TEST(CLI, AutoComplete)
 {
     CliCommand s2 = {
         .cmd = "three",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand s1 = {
         .cmd = "two",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & s2,
     };
     CliCommand s0 = {
         .cmd = "one",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & s1,
     };
     CliCommand a0 = {
         .cmd = "hello",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & s0,
     };
     CliCommand a1 = {
         .cmd = "bye",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand a2 = {
         .cmd = "partial",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand a3 = {
         .cmd = "part",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand x0 = {
         .cmd = "xx",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand x1 = {
         .cmd = "yy",
-        .handler = nowt,
+        .handler = cli_nowt,
         .next = & x0,
     };
     CliCommand x2 = {
         .cmd = "zz",
-        .handler = nowt,
+        .handler = cli_nowt,
         .next = & x1,
     };
     CliCommand a4 = {
         .cmd = "abcd",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & x2,
     };
 
@@ -907,7 +901,7 @@ TEST(CLI, Edit)
 {
     CliCommand a0 = {
         .cmd = "nowt",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
 
     cli_init(& cli, 64, 0);
@@ -1121,33 +1115,41 @@ static void gpio_out(CLI *cli, CliCommand *cmd)
     cli_print(cli, "ok%s", cli->eol);
 }
 
+class GpioCmd
+{
+public:
+    CliCommand cmd;
+
+    GpioCmd(const char *name, GPIO *gpio)
+    {
+        memset(& cmd, 0, sizeof(cmd));
+        cmd.cmd = name;
+        cmd.handler = gpio_out;
+        cmd.ctx = gpio;
+    }
+
+    void add(CLI *cli, CliCommand *parent)
+    {
+        cli_insert(cli, & parent->subcommand, & cmd);
+    }
+};
+
 TEST(CLI, GPIO)
 {
-    CliCommand g2 = {
-        .cmd = "PD5",
-        .handler = gpio_out,
-        .ctx = & pd5,
-    };
-    CliCommand g1 = {
-        .cmd = "PB2",
-        .handler = gpio_out,
-        .ctx = & pb2,
-    };
-    CliCommand g0 = {
-        .cmd = "PA1",
-        .handler = gpio_out,
-        .ctx = & pa1,
-    };
+    GpioCmd g0("PD5", & pd5);
+    GpioCmd g1("PB2", & pb2);
+    GpioCmd g2("PA1", & pa1);
+
     CliCommand a0 = {
         .cmd = "gpio",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
 
     cli_init(& cli, 64, 0);
     cli_register(& cli, & a0);
-    cli_insert(& cli, & a0.subcommand, & g2);
-    cli_insert(& cli, & a0.subcommand, & g1);
-    cli_insert(& cli, & a0.subcommand, & g0);
+    g0.add(& cli, & a0);
+    g1.add(& cli, & a0);
+    g2.add(& cli, & a0);
 
     cli_send(& cli, "gpio\n");
     EXPECT_FALSE(pa1.state);
@@ -1208,6 +1210,15 @@ TEST(CLI, GPIO)
     EXPECT_FALSE(pa1.state);
     EXPECT_FALSE(pb2.state);
     EXPECT_FALSE(pd5.state);
+
+    // check autocomplete
+    io.reset();
+    cli_send(& cli, "gpio \t");
+    EXPECT_STREQ("gpio \r\nPA1\r\nPB2\r\nPD5\r\n> gpio ", io.get());
+    // check that "gpio \n" does nothing
+    io.reset();
+    cli_send(& cli, "\n");
+    EXPECT_STREQ("\n> ", io.get());
 
     cli_close(& cli);
 }

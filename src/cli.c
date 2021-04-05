@@ -271,6 +271,18 @@ void cli_help(CLI *cli, CliCommand* cmd)
     _cli_help(cli, cmd, & cli->head, 0);
 }
 
+    /**
+     * @brief null command handler : do nothing
+     *
+     * useful as the base for a list of subcommands
+     */
+
+void cli_nowt(CLI *cli, CliCommand *cmd)
+{
+    UNUSED(cli);
+    UNUSED(cmd);
+}
+
     /*
      *
      */
