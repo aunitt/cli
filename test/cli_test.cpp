@@ -1184,6 +1184,31 @@ TEST(CLI, GPIO)
     EXPECT_TRUE(pb2.state);
     EXPECT_FALSE(pd5.state);
 
+    cli_send(& cli, "gpio PD5 1\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PA1 1\n");
+    EXPECT_TRUE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PA1 0\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PB2 0\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_FALSE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PD5 0\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_FALSE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
     cli_close(& cli);
 }
 
