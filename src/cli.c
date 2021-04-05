@@ -264,9 +264,7 @@ static void _cli_help(CLI *cli, CliCommand* cmd, CliCommand **head, int offset)
 
 void cli_help(CLI *cli, CliCommand* cmd)
 {
-    CliCommand **head = (CliCommand **) cmd->ctx;
-    ASSERT(head);
-    _cli_help(cli, cmd, head, 0);
+    _cli_help(cli, cmd, & cli->head, 0);
 }
 
     /*

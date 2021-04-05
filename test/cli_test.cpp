@@ -107,7 +107,6 @@ TEST(CLI, Help)
         .cmd = "help",
         .handler = cli_help,
         .help = HELP0,
-        .ctx = & cli.head,
     };
     CliCommand a1 = {
         .cmd = "anything",
@@ -171,7 +170,6 @@ TEST(CLI, HelpSub)
         .cmd = "help",
         .handler = cli_help,
         .help = HELP0,
-        .ctx = & cli.head,
     };
 
     cli_init(& cli, 64, 0);
@@ -205,7 +203,6 @@ TEST(CLI, Backspace)
         .cmd = "help",
         .handler = cli_help,
         .help = "help!",
-        .ctx = & cli.head,
     };
 
     cli_init(& cli, 64, 0);
@@ -285,7 +282,6 @@ TEST(CLI, EmptyLine)
     CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
-        .help = "help!",
     };
 
     cli_init(& cli, 64, 0);
@@ -304,7 +300,6 @@ TEST(CLI, OverflowLine)
     CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
-        .help = "help!",
     };
 
     io.reset();
@@ -389,7 +384,6 @@ TEST(CLI, Power)
         .handler = cli_help,
         .help = "power <device>",
         .subcommand = & s0,
-        .ctx = & cli.head,
     };
 
     cli_init(& cli, 64, 0);
@@ -814,7 +808,6 @@ TEST(CLI, File)
     CliCommand a4 = {
         .cmd = "help",
         .handler = cli_help,
-        .ctx = & cli.head, 
     };
 
     cli_init(& cli, 64, 0);
