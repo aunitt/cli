@@ -1043,6 +1043,30 @@ TEST(CLI, Edit)
     EXPECT_STREQ("helpx", cli.buff);
     EXPECT_EQ(5, cli.end);
     EXPECT_EQ(5, cli.cursor);
+    // complete the command
+    cli_send(& cli, "\n");
+
+    // ignore cursor up and down
+    io.reset();
+    // set up arbitrary data
+    cli_send(& cli, "abc");
+    cli_send(& cli, "\eD"); // <<
+    EXPECT_STREQ("abc\b", io.get());
+    EXPECT_STREQ("abc", cli.buff);
+    EXPECT_EQ(3, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    cli_send(& cli, "\eA"); // cursor up
+    EXPECT_STREQ("abc\b", io.get());
+    EXPECT_STREQ("abc", cli.buff);
+    EXPECT_EQ(3, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    cli_send(& cli, "\eB"); // cursor down
+    EXPECT_STREQ("abc\b", io.get());
+    EXPECT_STREQ("abc", cli.buff);
+    EXPECT_EQ(3, cli.end);
+    EXPECT_EQ(2, cli.cursor);
 
     cli_close(& cli);
 }
