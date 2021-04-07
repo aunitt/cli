@@ -2,6 +2,8 @@
      *
      */
 
+#include "cli.h"
+
 #include "io.h"
 
 class IO
@@ -10,9 +12,11 @@ class IO
     char *mem_buf = 0;
     size_t mem_size = 0;
 
+    CliOutput out;
+
 public:
 
-    FILE *open();
+    CliOutput *open();
     void close();
     void reset();
     char* get();

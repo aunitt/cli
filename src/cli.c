@@ -21,12 +21,11 @@ void cli_print(CLI *cli, const char *fmt, ...)
 {
     ASSERT(cli);
     ASSERT(cli->output);
+    ASSERT(cli->output->fprintf);
 
     va_list va;
     va_start(va, fmt);
-
-    vfprintf(cli->output, fmt, va);
-
+    cli->output->fprintf(cli->output->ctx, fmt, va);
     va_end(va);
 }
 

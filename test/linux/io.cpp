@@ -32,7 +32,8 @@ static ssize_t debug_write(void *cookie, const char *buf, size_t size)
     // TODO : the buff has no '\0' termination!
     char *s = strndup(buf, size);
 
-    syslog(LOG_DEBUG, "%s", s);
+    //syslog(LOG_DEBUG, "%s", s);
+    printf("%s\r\n", s);
 
     free(s);
 

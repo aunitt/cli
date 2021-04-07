@@ -29,6 +29,12 @@ typedef struct CliCommand {
 
 #define CLI_MAX_ARGS 8
 
+typedef struct
+{
+    int (*fprintf)(void *, const char *fmt, va_list va);
+    void *ctx;
+}   CliOutput;
+
 typedef struct CLI {
     char *buff;
     size_t size;
@@ -37,7 +43,7 @@ typedef struct CLI {
     bool escape;
 
     CliCommand *head;
-    FILE *output;
+    CliOutput *output;
     const char* prompt;
     const char* eol;
     struct Mutex *mutex; // can be null

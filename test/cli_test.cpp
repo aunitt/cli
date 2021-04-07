@@ -830,17 +830,25 @@ TEST(CLI, File)
     char *s = strdup(io.get());
     io.reset();
 
+    char *d = 0;
+    size_t size = 0;
+
+    FILE *f = open_memstream(& d, & size);
+
     // Mimic the output
-    FILE *f = cli.output;
     fprintf(f, "file test/redirect.txt\r\n");
     fprintf(f, "help one\none : 1111\r\n> ");
     fprintf(f, "one xx\nxx\r\n> ");
     fprintf(f, "two yy\nyy\r\n> ");
     fprintf(f, "three zz 1234 5678\nzz 1234 5678\r\n> ");
     fprintf(f, "> ");
+    fwrite("", 1, 1, f); // '\0' terminate
+    fflush(f);
 
-    EXPECT_STREQ(io.get(), s);
+    EXPECT_STREQ(d, s);
     free(s);
+    fclose(f);
+    free(d);
 
     cli_close(& cli);
 }
