@@ -52,7 +52,7 @@ TEST(CLI, Create)
 
     got_action = false;
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & action);
+    cli_register(& cli, & action);
 
     // Check that chars are stored in the buffer
     EXPECT_STREQ("", cli.buff);
@@ -77,8 +77,8 @@ TEST(CLI, Close)
 
     got_action = false;
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & action);
-    cli_register(& cli, 0, & more);
+    cli_register(& cli, & action);
+    cli_register(& cli, & more);
 
     // Check that chars are stored in the buffer
     EXPECT_STREQ("", cli.buff);
@@ -107,7 +107,6 @@ TEST(CLI, Help)
         .cmd = "help",
         .handler = cli_help,
         .help = HELP0,
-        .ctx = & cli.head,
     };
     CliCommand a1 = {
         .cmd = "anything",
@@ -121,9 +120,9 @@ TEST(CLI, Help)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a0);
-    cli_register(& cli, 0, & a1);
-    cli_register(& cli, 0, & a2);
+    cli_register(& cli, & a2);
+    cli_register(& cli, & a1);
+    cli_register(& cli, & a0);
 
     io.reset();
     cli_send(& cli, "help\r\n");
@@ -171,12 +170,11 @@ TEST(CLI, HelpSub)
         .cmd = "help",
         .handler = cli_help,
         .help = HELP0,
-        .ctx = & cli.head,
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a0);
-    cli_register(& cli, 0, & a1);
+    cli_register(& cli, & a0);
+    cli_register(& cli, & a1);
 
     // Check help <command>
     io.reset();
@@ -205,11 +203,10 @@ TEST(CLI, Backspace)
         .cmd = "help",
         .handler = cli_help,
         .help = "help!",
-        .ctx = & cli.head,
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a0);
+    cli_register(& cli, & a0);
 
     io.reset();
     cli_send(& cli, "heldx");
@@ -268,7 +265,7 @@ TEST(CLI, Context)
     };
 
     cli_init(& cli, 64, (void*) ctx_text);
-    cli_register(& cli, 0, & a0);
+    cli_register(& cli, & a0);
 
     ctx_ran = false;
     cli_send(& cli, "help\r\n");
@@ -285,11 +282,10 @@ TEST(CLI, EmptyLine)
     CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
-        .help = "help!",
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a0);
+    cli_register(& cli, & a0);
 
     cli_send(& cli, "\r\n");
 
@@ -304,12 +300,11 @@ TEST(CLI, OverflowLine)
     CliCommand a0 = {
         .cmd = "help",
         .handler = cli_help,
-        .help = "help!",
     };
 
     io.reset();
     cli_init(& cli, 10, 0);
-    cli_register(& cli, 0, & a0);
+    cli_register(& cli, & a0);
 
     for (int i = 0; i < 10; i++)
     {
@@ -389,11 +384,10 @@ TEST(CLI, Power)
         .handler = cli_help,
         .help = "power <device>",
         .subcommand = & s0,
-        .ctx = & cli.head,
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a0);
+    cli_register(& cli, & a0);
 
     // Query the device
     io.reset();
@@ -458,8 +452,8 @@ TEST(CLI, Input)
     struct ctx ctx = { .done = false };
 
     cli_init(& cli, 64, & ctx);
-    cli_register(& cli, 0, & a0);
-    cli_register(& cli, 0, & a1);
+    cli_register(& cli, & a0);
+    cli_register(& cli, & a1);
 
     io.reset();
 
@@ -489,71 +483,65 @@ TEST(CLI, Input)
      *
      */
 
-static void nowt(CLI *cli, CliCommand *cmd)
-{
-    UNUSED(cli);
-    UNUSED(cmd);
-}
-
 TEST(CLI, AutoComplete)
 {
     CliCommand s2 = {
         .cmd = "three",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand s1 = {
         .cmd = "two",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & s2,
     };
     CliCommand s0 = {
         .cmd = "one",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & s1,
     };
     CliCommand a0 = {
         .cmd = "hello",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & s0,
     };
     CliCommand a1 = {
         .cmd = "bye",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand a2 = {
         .cmd = "partial",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand a3 = {
         .cmd = "part",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand x0 = {
         .cmd = "xx",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
     CliCommand x1 = {
         .cmd = "yy",
-        .handler = nowt,
+        .handler = cli_nowt,
         .next = & x0,
     };
     CliCommand x2 = {
         .cmd = "zz",
-        .handler = nowt,
+        .handler = cli_nowt,
         .next = & x1,
     };
     CliCommand a4 = {
         .cmd = "abcd",
-        .handler = nowt,
+        .handler = cli_nowt,
         .subcommand = & x2,
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a0);
-    cli_register(& cli, 0, & a1);
-    cli_register(& cli, 0, & a2);
-    cli_register(& cli, 0, & a3);
-    cli_register(& cli, 0, & a4);
+    cli_register(& cli, & a4);
+    cli_register(& cli, & a3);
+    cli_register(& cli, & a2);
+    cli_register(& cli, & a1);
+    cli_register(& cli, & a0);
 
     io.reset();
     // should list all the commands
@@ -695,7 +683,7 @@ TEST(CLI, Subcommand)
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a3);
+    cli_register(& cli, & a3);
 
     io.reset();
 
@@ -814,15 +802,14 @@ TEST(CLI, File)
     CliCommand a4 = {
         .cmd = "help",
         .handler = cli_help,
-        .ctx = & cli.head, 
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a4);
-    cli_register(& cli, 0, & a3);
-    cli_register(& cli, 0, & a2);
-    cli_register(& cli, 0, & a1);
-    cli_register(& cli, 0, & a0);
+    cli_register(& cli, & a4);
+    cli_register(& cli, & a3);
+    cli_register(& cli, & a2);
+    cli_register(& cli, & a1);
+    cli_register(& cli, & a0);
 
     io.reset();
     cli_send(& cli, "file test/redirect.txt\r\n");
@@ -882,9 +869,9 @@ TEST(CLI, Two)
     cli_init(& cli2, 64, 0);
 
     CliCommand *head = 0;
-    cli_register(& cli, & head, & a0);
-    cli_register(& cli, & head, & a1);
-    cli_register(& cli, & head, & a2);
+    cli_insert(& cli, & head, & a2);
+    cli_insert(& cli, & head, & a1);
+    cli_insert(& cli, & head, & a0);
 
     // give both CLI instances the same command tree
     cli1.head = head;
@@ -922,11 +909,11 @@ TEST(CLI, Edit)
 {
     CliCommand a0 = {
         .cmd = "nowt",
-        .handler = nowt,
+        .handler = cli_nowt,
     };
 
     cli_init(& cli, 64, 0);
-    cli_register(& cli, 0, & a0);
+    cli_register(& cli, & a0);
 
     io.reset();
     cli_send(& cli, "help");
@@ -1058,6 +1045,188 @@ TEST(CLI, Edit)
     EXPECT_STREQ("helpx", cli.buff);
     EXPECT_EQ(5, cli.end);
     EXPECT_EQ(5, cli.cursor);
+    // complete the command
+    cli_send(& cli, "\n");
+
+    // ignore cursor up and down
+    io.reset();
+    // set up arbitrary data
+    cli_send(& cli, "abc");
+    cli_send(& cli, "\eD"); // <<
+    EXPECT_STREQ("abc\b", io.get());
+    EXPECT_STREQ("abc", cli.buff);
+    EXPECT_EQ(3, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    cli_send(& cli, "\eA"); // cursor up
+    EXPECT_STREQ("abc\b", io.get());
+    EXPECT_STREQ("abc", cli.buff);
+    EXPECT_EQ(3, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    cli_send(& cli, "\eB"); // cursor down
+    EXPECT_STREQ("abc\b", io.get());
+    EXPECT_STREQ("abc", cli.buff);
+    EXPECT_EQ(3, cli.end);
+    EXPECT_EQ(2, cli.cursor);
+
+    cli_close(& cli);
+}
+
+    /*
+     *
+     */
+
+class GPIO 
+{
+public:
+    bool state;
+
+    GPIO() : state(false) { }
+
+    void set(bool on)
+    {
+        state = on;
+    }
+};
+
+static GPIO pa1, pb2, pd5;
+
+static void gpio_out(CLI *cli, CliCommand *cmd)
+{
+    GPIO *gpio = (GPIO*) cmd->ctx;
+    ASSERT(gpio);
+
+    const char *s = cli_get_arg(cli, 0);
+
+    int value = -1;
+
+    if (s)
+    {
+        if (!strcmp(s, "0"))
+        {
+            value = 0;
+        }
+        if (!strcmp(s, "1"))
+        {
+            value = 1;
+        }
+    }
+
+    if (value == -1)
+    {
+        cli_print(cli, "expected 0|1%s", cli->eol);
+        return;
+    }
+
+    gpio->set(value);
+    cli_print(cli, "ok%s", cli->eol);
+}
+
+class GpioCmd
+{
+public:
+    CliCommand cmd;
+
+    GpioCmd(const char *name, GPIO *gpio)
+    {
+        memset(& cmd, 0, sizeof(cmd));
+        cmd.cmd = name;
+        cmd.handler = gpio_out;
+        cmd.ctx = gpio;
+    }
+
+    void add(CLI *cli, CliCommand *parent)
+    {
+        cli_insert(cli, & parent->subcommand, & cmd);
+    }
+};
+
+TEST(CLI, GPIO)
+{
+    GpioCmd g0("PD5", & pd5);
+    GpioCmd g1("PB2", & pb2);
+    GpioCmd g2("PA1", & pa1);
+
+    CliCommand a0 = {
+        .cmd = "gpio",
+        .handler = cli_nowt,
+    };
+
+    cli_init(& cli, 64, 0);
+    cli_register(& cli, & a0);
+    g0.add(& cli, & a0);
+    g1.add(& cli, & a0);
+    g2.add(& cli, & a0);
+
+    cli_send(& cli, "gpio\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_FALSE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    cli_send(& cli, "gpio PA1\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_FALSE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    cli_send(& cli, "gpio PA1 1\n");
+    EXPECT_TRUE(pa1.state);
+    EXPECT_FALSE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    cli_send(& cli, "gpio PB2 1\n");
+    EXPECT_TRUE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    cli_send(& cli, "gpio PD5 0\n");
+    EXPECT_TRUE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    cli_send(& cli, "gpio PA1 3\n");
+    EXPECT_TRUE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    cli_send(& cli, "gpio PA1 0\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    cli_send(& cli, "gpio PD5 1\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PA1 1\n");
+    EXPECT_TRUE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PA1 0\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_TRUE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PB2 0\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_FALSE(pb2.state);
+    EXPECT_TRUE(pd5.state);
+
+    cli_send(& cli, "gpio PD5 0\n");
+    EXPECT_FALSE(pa1.state);
+    EXPECT_FALSE(pb2.state);
+    EXPECT_FALSE(pd5.state);
+
+    // check autocomplete
+    io.reset();
+    cli_send(& cli, "gpio \t");
+    EXPECT_STREQ("gpio \r\nPA1\r\nPB2\r\nPD5\r\n> gpio ", io.get());
+    // check that "gpio \n" does nothing
+    io.reset();
+    cli_send(& cli, "\n");
+    EXPECT_STREQ("\n> ", io.get());
 
     cli_close(& cli);
 }
