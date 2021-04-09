@@ -2,9 +2,9 @@
 #include <gtest/gtest.h>
 
 #include <cli_debug.h>
-#include "list.h"
-#include "cli.h"
-#include "io.h"
+#include "../src/list.h"
+#include "../src/cli.h"
+#include "../src/io.h"
 #include "test_io.h"
 
     /*

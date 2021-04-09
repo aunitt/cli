@@ -2,9 +2,9 @@
      *
      */
 
-#include "cli.h"
+#include "../src/cli.h"
 
-#include "io.h"
+#include "../src/io.h"
 
 class IO
 {
