@@ -553,4 +553,24 @@ void cli_close(CLI *cli)
     cli->head = 0;
 }
 
+    /*
+     *
+     */
+
+bool cli_parse_int(const char *s, int *value, int base)
+{
+    ASSERT(s);
+
+    char *end = 0;
+    long int val = strtol(s, & end, base);
+    ASSERT(end);
+    if ('\0' == *end)
+    {
+        *value = (int) val;
+        return true;
+    }
+
+    return false;
+}
+
 //  FIN

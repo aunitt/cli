@@ -71,6 +71,8 @@ void cli_nowt(CLI *cli, CliCommand *cmd);
 
 const char* cli_get_arg(CLI *cli, int offset);
 
+bool cli_parse_int(const char *s, int *value, int base);
+
 #if defined(__cplusplus)
 }
 #endif
