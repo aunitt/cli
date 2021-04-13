@@ -559,7 +559,16 @@ void cli_close(CLI *cli)
 
 bool cli_parse_int(const char *s, int *value, int base)
 {
-    ASSERT(s);
+    if (!s)
+    {
+        return false;
+    }
+
+    if ('\0' == *s)
+    {
+        // nothing in the string
+        return false;
+    }
 
     char *end = 0;
     long int val = strtol(s, & end, base);
