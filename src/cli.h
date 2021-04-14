@@ -69,9 +69,16 @@ void cli_help(CLI *cli, CliCommand* cmd);
 
 void cli_nowt(CLI *cli, CliCommand *cmd);
 
+// accessing and parsing args
+
 const char* cli_get_arg(CLI *cli, int offset);
 
 bool cli_parse_int(const char *s, int *value, int base);
+
+// helper commands for list manipulation
+
+bool cli_remove(CliCommand **head, CliCommand *item);
+CliCommand *cli_find(CliCommand **head, int (*fn)(CliCommand *cmd, void *arg), void *arg);
 
 #if defined(__cplusplus)
 }

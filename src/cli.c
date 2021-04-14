@@ -582,4 +582,22 @@ bool cli_parse_int(const char *s, int *value, int base)
     return false;
 }
 
+    /*
+     *
+     */
+
+bool cli_remove(CliCommand **head, CliCommand *item)
+{
+    ASSERT(head);
+    ASSERT(item);
+    return list_remove((pList*) head, (pList) item, next_fn, 0);
+}
+
+CliCommand *cli_find(CliCommand **head, int (*fn)(CliCommand *cmd, void *arg), void *arg)
+{
+    ASSERT(head);
+    ASSERT(fn);
+    return (CliCommand*) list_find((pList*) head, next_fn, (visitor) fn, arg, 0);
+}
+
 //  FIN
