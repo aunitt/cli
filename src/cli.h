@@ -4,6 +4,7 @@
 #define __CLI_H__
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "io.h"
 
