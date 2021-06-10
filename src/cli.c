@@ -40,6 +40,10 @@ void cli_clear(CLI *cli)
     cli->escape = false;
     cli->buff[0] = '\0';
     cli->nest = 0;
+    for (int i = 0; i < CLI_MAX_ARGS; i++)
+    {
+        cli->args[i] = 0;
+    }
 }
 
     /**
