@@ -75,6 +75,7 @@ void cli_nowt(CLI *cli, CliCommand *cmd);
 const char* cli_get_arg(CLI *cli, int offset);
 
 bool cli_parse_int(const char *s, int *value, int base);
+bool cli_parse_float(const char *s, float *value);
 
 // helper commands for list manipulation
 

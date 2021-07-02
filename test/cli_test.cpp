@@ -1298,4 +1298,59 @@ TEST(CLI, ParseInt)
     EXPECT_EQ(0x1234, value);
 }
 
+    /*
+     *
+     */
+
+TEST(CLI, ParseFloat)
+{
+    float value;
+    bool ok;
+
+    struct Data {
+        const char *text;
+        float value;
+    };
+
+    const struct Data good_data[] = {
+        {   "1234",         1234.0f },
+        {   "-1234",        -1234.0f },
+        {   "0",            0.0f },
+        {   "0.0",          0.0f },
+        {   "-0.0",         0.0f },
+        {   "0.123456",     0.123456f },
+        {   "0.000001",     0.000001f },
+        {   "1.2e2",        120.0f },
+        {   "-1.2e2",       -120.0f },
+        {   "1.2e-5",       0.000012f },
+        {   "0x0",          0.0f }, // Hex works
+        {   "0x100",        256.0f },
+        {   0,              0 },
+    };
+
+    for (const struct Data *d = good_data; d->text; d++)
+    {
+        //LOG_DEBUG("%s", d->text);
+        ok = cli_parse_float(d->text, & value);
+        EXPECT_TRUE(ok);
+        EXPECT_EQ(d->value, value);
+    }
+
+    const struct Data bad_data[] = {
+        {   "123x", },
+        {   "a0", },
+        {   "0 0", },
+        {   "1.2f", },
+        {   "--1", },
+        {   0,      },
+    };
+
+    for (const struct Data *d = bad_data; d->text; d++)
+    {
+        //LOG_DEBUG("%s", d->text);
+        ok = cli_parse_float(d->text, & value);
+        EXPECT_FALSE(ok);
+    }
+}
+
 //  FIN

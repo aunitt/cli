@@ -590,6 +590,35 @@ bool cli_parse_int(const char *s, int *value, int base)
      *
      */
 
+bool cli_parse_float(const char *s, float *value)
+{
+    if (!s)
+    {
+        return false;
+    }
+
+    if ('\0' == *s)
+    {
+        // nothing in the string
+        return false;
+    }
+
+    char *end = 0;
+    float val = strtof(s, & end);
+    ASSERT(end);
+    if ('\0' == *end)
+    {
+        *value = val;
+        return true;
+    }
+
+    return false;
+}
+
+    /*
+     *
+     */
+
 bool cli_remove(CliCommand **head, CliCommand *item)
 {
     ASSERT(head);
