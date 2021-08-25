@@ -20,14 +20,6 @@ static Item ** item_next(Item *item)
     return & item->next;
 }
 
-/*
-static ListItem ** item_next(ListItem *item)
-{
-    return (ListItem **)item_next_local((Item*)item);
-    //return (ListItem **)(&((Item*)item)->next); 
-}
-*/
-
 static int cmp(Item* a, Item* b)
 {
     return b->value - a->value;
@@ -63,10 +55,7 @@ static int visit_match(Item* a, void *arg)
 
 TEST(List, AddRemove)
 {
-    //pnext fn = aka_item_next<Item *,item_next>;
-    //List<Item*> list(item_next);
-    //List<Item*> list(fn);
-    List<Item*> list(make_item_next<Item *,item_next>);
+    List<Item*> list(item_next);
 
     EXPECT_EQ(0, list.size(0));
     EXPECT_TRUE(list.empty());
@@ -201,8 +190,7 @@ TEST(List, AddRemove)
 
 TEST(List, Sorted)
 {
-    //List<Item*> list(item_next);
-    List<Item*> list(make_item_next<Item *,item_next>);
+    List<Item*> list(item_next);
 
     EXPECT_EQ(0, list.size(0));
     EXPECT_TRUE(list.empty());
@@ -261,8 +249,7 @@ TEST(List, Sorted)
 
 TEST(List, VisitFind)
 {
-    //List<Item*> list(item_next);
-    List<Item*> list(make_item_next<Item *,item_next>);
+    List<Item*> list(item_next);
 
     EXPECT_EQ(0, list.size(0));
     EXPECT_TRUE(list.empty());
@@ -387,8 +374,7 @@ static void *remove_thread(void *arg)
 
 TEST(List, Thread)
 {
-    //List<Item*> list(item_next);
-    List<Item*> list(make_item_next<Item *,item_next>);
+    List<Item*> list(item_next);
     Mutex *mutex = Mutex::create();
 
     const int num = 50;

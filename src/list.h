@@ -45,12 +45,6 @@ void list_visit(pList *head, pnext next_fn, visitor fn, void *arg, struct Mutex 
      *
      */
 
-template <class I, I* next(I)>
-static ListItem ** make_item_next(ListItem *item)
-{
-    return (ListItem **)next((I)item); 
-}
-
 template <class T>
 class List
 {
@@ -58,20 +52,9 @@ public:
     typedef T* (*fn)(T item);
 
     T head;
-    //fn next_fn;
-    pnext next_fn;
+    fn next_fn;
 
-    /*
-    List(fn _fn) : head(0) 
-    { 
-        next_fn = make_item_next<T,_fn>;
-    }
-    */
-
-    List(pnext _fn) : head(0), next_fn(_fn) 
-    { 
-        //next_fn = make_item_next<T,_fn>;
-    }
+    List(fn _fn) : head(0), next_fn(_fn) { }
 
     void push(T w, Mutex *mutex)
     {
