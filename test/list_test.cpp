@@ -8,6 +8,8 @@
 
 #include "../src/list.h"
 
+#include <iostream>
+
 typedef struct Item
 {
     struct Item *next;
@@ -61,12 +63,22 @@ static int visit_match(Item* a, void *arg)
      *
      */
 
+typedef Item** (*fn)(Item * item);
+
 TEST(List, AddRemove)
 {
     //pnext fn = aka_item_next<Item *,item_next>;
-    //List<Item*> list(item_next);
+    List<Item*> list2(item_next);
     //List<Item*> list(fn);
-    List<Item*> list(make_item_next<Item *,item_next>);
+    List<Item*> list(&make_item_next<Item *,&item_next>);
+
+    fn ptr = item_next;
+
+    std::cout << "ptr=" << typeid(ptr).name() << std::endl;
+    std::cout << "item_next=" << typeid(item_next).name() << std::endl;
+    std::cout << typeid(make_item_next<Item *,item_next>).name() << std::endl; 
+    std::cout << typeid(&make_item_next<Item *,item_next>).name() << std::endl;
+    std::cout << typeid(pnext).name() << std::endl;
 
     EXPECT_EQ(0, list.size(0));
     EXPECT_TRUE(list.empty());
